@@ -570,13 +570,12 @@ const styles = StyleSheet.create({
     color: colors.textLight,
   },
   emptyCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.pinkSoft,
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
+    borderColor: colors.pinkMid,
   },
   emptyIcon: {
     fontSize: 28,

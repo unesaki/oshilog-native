@@ -490,13 +490,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   emptyCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.pinkSoft,
     borderRadius: 20,
     padding: 40,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: colors.border,
-    borderStyle: 'dashed',
+    borderColor: colors.pinkMid,
     marginTop: 20,
   },
   emptyIcon: {
