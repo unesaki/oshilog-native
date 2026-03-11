@@ -7,7 +7,7 @@ export const EXPENSE_CATEGORIES = [
 ] as const
 
 export const PLAN_LIMITS = {
-  free: { oshiCount: 1 },
+  free: { oshiCount: 3 },
   premium: { oshiCount: Infinity },
 } as const
 
