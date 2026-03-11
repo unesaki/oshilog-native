@@ -82,6 +82,8 @@ export default function HomeScreen({ navigation, onTabChange }: Props) {
   const [oshis, setOshis] = useState<Oshi[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [budgets, setBudgets] = useState<Budget[]>([])
+  const [lastMonthTotal, setLastMonthTotal] = useState<number | null>(null)
+  const [isDummy, setIsDummy] = useState(false)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
@@ -91,10 +93,13 @@ export default function HomeScreen({ navigation, onTabChange }: Props) {
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   const monthLabel = `${now.getMonth() + 1}月`
 
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const lastMonth = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`
+
   const loadData = useCallback(async () => {
     if (!user) return
     try {
-      const [oshisRes, expensesRes, budgetsRes] = await Promise.all([
+      const [oshisRes, expensesRes, budgetsRes, lastMonthRes] = await Promise.all([
         supabase
           .from('oshis')
           .select('*')
@@ -112,28 +117,38 @@ export default function HomeScreen({ navigation, onTabChange }: Props) {
           .select('*')
           .eq('user_id', user.id)
           .eq('year_month', currentMonth),
+        supabase
+          .from('expenses')
+          .select('amount')
+          .eq('user_id', user.id)
+          .gte('spent_at', `${lastMonth}-01`)
+          .lte('spent_at', `${lastMonth}-31`),
       ])
 
-      if (oshisRes.data && oshisRes.data.length > 0) {
-        setOshis(oshisRes.data)
+      // Supabase に繋がっている場合は実データを使う（0件でも空として表示）
+      if (!oshisRes.error) {
+        setOshis(oshisRes.data ?? [])
+        setIsDummy(false)
       } else {
-        setOshis(DUMMY_OSHIS)
+        throw oshisRes.error
       }
-      if (expensesRes.data && expensesRes.data.length > 0) {
-        setExpenses(expensesRes.data)
-      } else {
-        setExpenses(DUMMY_EXPENSES)
-      }
+      setExpenses(expensesRes.error ? [] : (expensesRes.data ?? []))
       setBudgets(budgetsRes.data ?? [])
+
+      const lastTotal = (lastMonthRes.data ?? []).reduce((sum, e) => sum + e.amount, 0)
+      setLastMonthTotal(lastTotal)
     } catch {
+      // Supabase 未設定 or ネットワークエラー → ダミーデータを表示
       setOshis(DUMMY_OSHIS)
       setExpenses(DUMMY_EXPENSES)
       setBudgets(DUMMY_BUDGETS)
+      setLastMonthTotal(null)
+      setIsDummy(true)
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [user, currentMonth])
+  }, [user, currentMonth, lastMonth])
 
   useEffect(() => {
     loadData()
@@ -174,6 +189,17 @@ export default function HomeScreen({ navigation, onTabChange }: Props) {
 
   const monthExpenses = expenses.filter(e => e.spent_at.startsWith(currentMonth))
   const totalAmount = monthExpenses.reduce((sum, e) => sum + e.amount, 0)
+
+  const bannerSub = (() => {
+    if (isDummy) return `${oshis.length}人の推しを応援中 💝`
+    if (oshis.length === 0) return '推しを追加しよう 🌸'
+    if (lastMonthTotal === null || lastMonthTotal === 0) return `${oshis.length}人の推しを応援中 💝`
+    const diff = totalAmount - lastMonthTotal
+    if (diff === 0) return '先月と同じ金額です'
+    const sign = diff > 0 ? '+' : '-'
+    return `先月より${sign}¥${Math.abs(diff).toLocaleString('ja-JP')}`
+  })()
+
   const recentExpenses = [...monthExpenses].sort(
     (a, b) => new Date(b.spent_at).getTime() - new Date(a.spent_at).getTime()
   ).slice(0, 3)
@@ -246,9 +272,7 @@ export default function HomeScreen({ navigation, onTabChange }: Props) {
           >
             <Text style={styles.bannerLabel}>{monthLabel}の推し活合計</Text>
             <Text style={styles.bannerAmount}>{formatAmount(totalAmount)}</Text>
-            <Text style={styles.bannerSub}>
-              {oshis.length > 0 ? `${oshis.length}人の推しを応援中 💝` : '推しを追加しよう 🌸'}
-            </Text>
+            <Text style={styles.bannerSub}>{bannerSub}</Text>
           </LinearGradient>
 
           {/* Oshi Section */}

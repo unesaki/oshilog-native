@@ -24,6 +24,17 @@ import { RootStackParamList } from '../navigation/RootNavigator'
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window')
 
+const EMOJI_OPTIONS = [
+  '🌸', '⭐', '💎', '🎀', '🌙', '☀️', '🦋', '🌺',
+  '🍀', '🐾', '🎵', '🎤', '🎸', '👑', '🌈', '❤️',
+  '💜', '💙', '💚', '🧡', '🌟', '✨', '🔥', '💫',
+]
+
+const COLOR_OPTIONS = [
+  '#FF3D87', '#7B68EE', '#4A90D9', '#26C6DA',
+  '#66BB6A', '#FF8C42', '#EF5350', '#FFCA28',
+]
+
 const DUMMY_OSHIS: Oshi[] = [
   {
     id: '1', user_id: 'dummy', name: '桜山あかり',
@@ -51,6 +62,8 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
   const [editTarget, setEditTarget] = useState<Oshi | null>(null)
   const [editName, setEditName] = useState('')
   const [editBudget, setEditBudget] = useState('')
+  const [editEmoji, setEditEmoji] = useState('')
+  const [editColor, setEditColor] = useState('')
   const [saving, setSaving] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const sheetAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current
@@ -72,10 +85,10 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
           .lte('spent_at', `${currentMonth}-31`),
       ])
 
-      if (oshisRes.data && oshisRes.data.length > 0) {
-        setOshis(oshisRes.data)
+      if (!oshisRes.error) {
+        setOshis(oshisRes.data ?? [])
       } else {
-        setOshis(DUMMY_OSHIS)
+        throw oshisRes.error
       }
       setBudgets(budgetsRes.data ?? [])
 
@@ -85,6 +98,7 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
       }
       setMonthlyTotals(totals)
     } catch {
+      // Supabase 未設定 or ネットワークエラー → ダミーデータ表示
       setOshis(DUMMY_OSHIS)
     } finally {
       setLoading(false)
@@ -98,6 +112,8 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
   const openEdit = (oshi: Oshi) => {
     setEditTarget(oshi)
     setEditName(oshi.name)
+    setEditEmoji(oshi.icon_emoji)
+    setEditColor(oshi.color)
     const budget = budgets.find(b => b.oshi_id === oshi.id)
     setEditBudget(budget ? String(budget.amount) : '')
     setShowDeleteConfirm(false)
@@ -130,7 +146,7 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
     try {
       await supabase
         .from('oshis')
-        .update({ name: editName.trim() })
+        .update({ name: editName.trim(), icon_emoji: editEmoji, color: editColor })
         .eq('id', editTarget.id)
 
       if (editBudget.trim()) {
@@ -344,10 +360,11 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
                       </TouchableOpacity>
                     </View>
                   ) : (
+                    <ScrollView style={styles.sheetScroll} showsVerticalScrollIndicator={false}>
                     <View style={styles.sheetContent}>
                       <View style={styles.sheetHeader}>
-                        <View style={[styles.sheetAvatar, { backgroundColor: editTarget.color + '30' }]}>
-                          <Text style={styles.sheetAvatarEmoji}>{editTarget.icon_emoji}</Text>
+                        <View style={[styles.sheetAvatar, { backgroundColor: editColor + '30' }]}>
+                          <Text style={styles.sheetAvatarEmoji}>{editEmoji}</Text>
                         </View>
                         <Text style={styles.sheetTitle}>推しを編集</Text>
                       </View>
@@ -362,6 +379,47 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
                           placeholderTextColor={colors.textLight}
                           maxLength={30}
                         />
+                      </View>
+
+                      <View style={styles.inputGroup}>
+                        <Text style={styles.inputLabel}>アイコン絵文字</Text>
+                        <View style={styles.emojiGrid}>
+                          {EMOJI_OPTIONS.map(emoji => (
+                            <TouchableOpacity
+                              key={emoji}
+                              style={[
+                                styles.emojiChip,
+                                editEmoji === emoji && { backgroundColor: editColor + '20', borderColor: editColor, borderWidth: 2 },
+                              ]}
+                              onPress={() => setEditEmoji(emoji)}
+                              activeOpacity={0.7}
+                            >
+                              <Text style={styles.emojiText}>{emoji}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+
+                      <View style={styles.inputGroup}>
+                        <Text style={styles.inputLabel}>テーマカラー</Text>
+                        <View style={styles.colorRow}>
+                          {COLOR_OPTIONS.map(color => (
+                            <TouchableOpacity
+                              key={color}
+                              style={[
+                                styles.colorCircle,
+                                { backgroundColor: color },
+                                editColor === color && styles.colorCircleSelected,
+                              ]}
+                              onPress={() => setEditColor(color)}
+                              activeOpacity={0.8}
+                            >
+                              {editColor === color && (
+                                <Text style={styles.colorCheck}>✓</Text>
+                              )}
+                            </TouchableOpacity>
+                          ))}
+                        </View>
                       </View>
 
                       <View style={styles.inputGroup}>
@@ -404,6 +462,7 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
                         <Text style={styles.deleteBtnText}>この推しを削除</Text>
                       </TouchableOpacity>
                     </View>
+                    </ScrollView>
                   )}
                 </SafeAreaView>
               </TouchableOpacity>
@@ -719,5 +778,52 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.textMid,
     fontWeight: '600',
+  },
+  sheetScroll: {
+    maxHeight: 540,
+  },
+  emojiGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  emojiChip: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: colors.cream,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  emojiText: {
+    fontSize: 24,
+  },
+  colorRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  colorCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  colorCircleSelected: {
+    borderWidth: 3,
+    borderColor: colors.white,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  colorCheck: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '800',
   },
 })

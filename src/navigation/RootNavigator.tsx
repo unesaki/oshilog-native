@@ -6,7 +6,6 @@ import LoginScreen from '../screens/LoginScreen'
 import MainTabsScreen from '../screens/MainTabsScreen'
 import AddExpenseScreen from '../screens/AddExpenseScreen'
 import OshiNewScreen from '../screens/OshiNewScreen'
-import OshiListScreen from '../screens/OshiListScreen'
 import { colors } from '../constants/colors'
 
 export type RootStackParamList = {
@@ -14,7 +13,6 @@ export type RootStackParamList = {
   MainTabs: undefined
   AddExpense: { oshiId?: string } | undefined
   OshiNew: { oshiId?: string } | undefined
-  OshiList: undefined
 }
 
 const Stack = createNativeStackNavigator<RootStackParamList>()
@@ -37,7 +35,6 @@ export default function RootNavigator() {
       ) : (
         <>
           <Stack.Screen name="MainTabs" component={MainTabsScreen} />
-          <Stack.Screen name="OshiList" component={OshiListScreen} />
           <Stack.Screen
             name="AddExpense"
             component={AddExpenseScreen}
