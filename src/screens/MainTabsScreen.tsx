@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { colors } from '../constants/colors'
+import { fonts } from '../constants/fonts'
 import HomeScreen from './HomeScreen'
 import OshiListScreen from './OshiListScreen'
 import { RootStackParamList } from '../navigation/RootNavigator'
@@ -147,11 +148,11 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 11,
     color: colors.textLight,
-    fontWeight: '500',
+    fontFamily: fonts.bodyMedium,
   },
   tabLabelActive: {
     color: colors.pinkVivid,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
   },
   fabContainer: {
     width: 80,
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
   fabIcon: {
     fontSize: 28,
     color: colors.white,
-    fontWeight: '300',
+    fontFamily: fonts.body,
     lineHeight: 32,
   },
 })

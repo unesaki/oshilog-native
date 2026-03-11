@@ -19,6 +19,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { supabase } from '../lib/supabase/client'
 import { useAuth } from '../context/AuthContext'
 import { colors } from '../constants/colors'
+import { fonts } from '../constants/fonts'
+import { validateAmount, validateExpenseTitle, validateMemo, validateDate, sanitizeText } from '../lib/validate'
 import { Oshi } from '../types'
 import { RootStackParamList } from '../navigation/RootNavigator'
 
@@ -52,6 +54,11 @@ export default function AddExpenseScreen({ navigation, route }: Props) {
   const [spentAt, setSpentAt] = useState(new Date().toISOString().slice(0, 10))
   const [showNumPad, setShowNumPad] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // Inline validation errors
+  const [amountError, setAmountError] = useState<string | null>(null)
+  const [titleError, setTitleError] = useState<string | null>(null)
+  const [oshiError, setOshiError] = useState<string | null>(null)
 
   const loadOshis = useCallback(async () => {
     if (!user) return
@@ -87,22 +94,22 @@ export default function AddExpenseScreen({ navigation, route }: Props) {
         return next.length > 9 ? prev : next
       })
     }
+    setAmountError(null)
   }
 
   const handleSave = async () => {
     const amount = parseInt(amountStr, 10)
-    if (isNaN(amount) || amount <= 0) {
-      Alert.alert('入力エラー', '金額を入力してください')
-      return
-    }
-    if (!selectedOshiId) {
-      Alert.alert('入力エラー', '推しを選択してください')
-      return
-    }
-    if (!title.trim()) {
-      Alert.alert('入力エラー', 'タイトルを入力してください')
-      return
-    }
+    const amtErr = validateAmount(isNaN(amount) ? 0 : amount)
+    const ttlErr = validateExpenseTitle(title)
+    const memoErr = validateMemo(memo)
+    const dateErr = validateDate(spentAt)
+    const noOshi = !selectedOshiId
+
+    setAmountError(amtErr)
+    setTitleError(ttlErr)
+    setOshiError(noOshi ? '推しを選択してください' : null)
+
+    if (amtErr || ttlErr || memoErr || dateErr || noOshi) return
     if (!user) return
 
     setSaving(true)
@@ -112,8 +119,8 @@ export default function AddExpenseScreen({ navigation, route }: Props) {
         oshi_id: selectedOshiId,
         amount,
         category: selectedCategory,
-        title: title.trim(),
-        memo: memo.trim() || null,
+        title: sanitizeText(title.trim()),
+        memo: memo.trim() ? sanitizeText(memo.trim()) : null,
         spent_at: spentAt,
       })
       if (error) throw error
@@ -165,7 +172,7 @@ export default function AddExpenseScreen({ navigation, route }: Props) {
         >
           {/* Amount */}
           <TouchableOpacity
-            style={styles.amountCard}
+            style={[styles.amountCard, amountError && styles.inputError]}
             onPress={() => setShowNumPad(true)}
             activeOpacity={0.8}
           >
@@ -173,6 +180,7 @@ export default function AddExpenseScreen({ navigation, route }: Props) {
             <Text style={styles.amountValue}>¥{formatDisplayAmount(amountStr)}</Text>
             <Text style={styles.amountHint}>タップして入力</Text>
           </TouchableOpacity>
+          {amountError && <Text style={styles.errorText}>{amountError}</Text>}
 
           {/* Oshi Selection */}
           <View style={styles.section}>
@@ -195,7 +203,10 @@ export default function AddExpenseScreen({ navigation, route }: Props) {
                       selectedOshiId === oshi.id && styles.oshiChipSelected,
                       selectedOshiId === oshi.id && { borderColor: oshi.color },
                     ]}
-                    onPress={() => setSelectedOshiId(oshi.id)}
+                    onPress={() => {
+                      setSelectedOshiId(oshi.id)
+                      setOshiError(null)
+                    }}
                     activeOpacity={0.8}
                   >
                     <View style={[
@@ -206,7 +217,7 @@ export default function AddExpenseScreen({ navigation, route }: Props) {
                     </View>
                     <Text style={[
                       styles.oshiChipName,
-                      selectedOshiId === oshi.id && { color: oshi.color, fontWeight: '700' },
+                      selectedOshiId === oshi.id && { color: oshi.color, fontFamily: fonts.bodyBold },
                     ]}>
                       {oshi.name}
                     </Text>
@@ -214,6 +225,7 @@ export default function AddExpenseScreen({ navigation, route }: Props) {
                 ))}
               </ScrollView>
             )}
+            {oshiError && <Text style={styles.errorText}>{oshiError}</Text>}
           </View>
 
           {/* Category */}
@@ -246,13 +258,17 @@ export default function AddExpenseScreen({ navigation, route }: Props) {
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>タイトル</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, titleError && styles.inputError]}
               value={title}
-              onChangeText={setTitle}
+              onChangeText={t => {
+                setTitle(t)
+                setTitleError(null)
+              }}
               placeholder="例: コンサートチケット"
               placeholderTextColor={colors.textLight}
               maxLength={50}
             />
+            {titleError && <Text style={styles.errorText}>{titleError}</Text>}
           </View>
 
           {/* Memo */}
@@ -402,10 +418,11 @@ const styles = StyleSheet.create({
   closeBtnText: {
     fontSize: 18,
     color: colors.textMid,
+    fontFamily: fonts.body,
   },
   headerTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
     color: colors.textDark,
   },
   scroll: {
@@ -425,19 +442,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 12,
     elevation: 4,
-    marginBottom: 20,
+    marginBottom: 4,
     borderWidth: 1.5,
     borderColor: colors.border,
   },
   amountLabel: {
     fontSize: 13,
     color: colors.textLight,
-    fontWeight: '600',
+    fontFamily: fonts.bodyMedium,
     marginBottom: 8,
   },
   amountValue: {
     fontSize: 40,
-    fontWeight: '800',
+    fontFamily: fonts.bodyBold,
     color: colors.pinkVivid,
     letterSpacing: -1,
     marginBottom: 4,
@@ -445,13 +462,25 @@ const styles = StyleSheet.create({
   amountHint: {
     fontSize: 12,
     color: colors.textLight,
+    fontFamily: fonts.body,
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#FF4444',
+    fontFamily: fonts.body,
+    marginTop: 4,
+    marginBottom: 8,
+    paddingHorizontal: 4,
+  },
+  inputError: {
+    borderColor: '#FF4444',
   },
   section: {
     marginBottom: 20,
   },
   sectionLabel: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fonts.bodyMedium,
     color: colors.textMid,
     marginBottom: 10,
   },
@@ -464,6 +493,7 @@ const styles = StyleSheet.create({
   noOshiText: {
     fontSize: 14,
     color: colors.textMid,
+    fontFamily: fonts.body,
   },
   oshiRow: {
     paddingHorizontal: 2,
@@ -499,6 +529,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textMid,
     textAlign: 'center',
+    fontFamily: fonts.body,
   },
   categoryGrid: {
     flexDirection: 'row',
@@ -526,11 +557,11 @@ const styles = StyleSheet.create({
   categoryLabel: {
     fontSize: 13,
     color: colors.textMid,
-    fontWeight: '600',
+    fontFamily: fonts.bodyMedium,
   },
   categoryLabelSelected: {
     color: colors.pinkVivid,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
   },
   input: {
     borderWidth: 1.5,
@@ -541,6 +572,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.textDark,
     backgroundColor: colors.white,
+    fontFamily: fonts.body,
   },
   memoInput: {
     height: 88,
@@ -563,7 +595,7 @@ const styles = StyleSheet.create({
   dateArrowText: {
     fontSize: 14,
     color: colors.pinkVivid,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
   },
   datePill: {
     flex: 1,
@@ -576,7 +608,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fonts.bodyMedium,
     color: colors.textDark,
   },
   saveBtn: {
@@ -596,7 +628,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     color: colors.white,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
     letterSpacing: 0.3,
   },
   // NumPad Modal
@@ -623,7 +655,7 @@ const styles = StyleSheet.create({
   },
   numPadDisplay: {
     fontSize: 44,
-    fontWeight: '800',
+    fontFamily: fonts.bodyBold,
     color: colors.pinkVivid,
     textAlign: 'center',
     letterSpacing: -1,
@@ -651,7 +683,7 @@ const styles = StyleSheet.create({
   },
   numPadKeyText: {
     fontSize: 22,
-    fontWeight: '600',
+    fontFamily: fonts.bodyMedium,
     color: colors.textDark,
   },
   numPadKeyDeleteText: {
@@ -670,6 +702,6 @@ const styles = StyleSheet.create({
   numPadDoneText: {
     color: colors.white,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
   },
 })

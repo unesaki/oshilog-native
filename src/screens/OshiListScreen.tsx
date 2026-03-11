@@ -19,33 +19,16 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { supabase } from '../lib/supabase/client'
 import { useAuth } from '../context/AuthContext'
 import { colors } from '../constants/colors'
+import { fonts } from '../constants/fonts'
+import { validateOshiName, validateBudget, sanitizeText } from '../lib/validate'
 import { Oshi, Budget } from '../types'
 import { RootStackParamList } from '../navigation/RootNavigator'
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window')
 
-const EMOJI_OPTIONS = [
-  '🌸', '⭐', '💎', '🎀', '🌙', '☀️', '🦋', '🌺',
-  '🍀', '🐾', '🎵', '🎤', '🎸', '👑', '🌈', '❤️',
-  '💜', '💙', '💚', '🧡', '🌟', '✨', '🔥', '💫',
-]
-
-const COLOR_OPTIONS = [
-  '#FF3D87', '#7B68EE', '#4A90D9', '#26C6DA',
-  '#66BB6A', '#FF8C42', '#EF5350', '#FFCA28',
-]
-
 const DUMMY_OSHIS: Oshi[] = [
-  {
-    id: '1', user_id: 'dummy', name: '桜山あかり',
-    color: '#FF3D87', icon_emoji: '🌸', icon_url: null,
-    sort_order: 0, created_at: '',
-  },
-  {
-    id: '2', user_id: 'dummy', name: '星野ゆい',
-    color: '#7B68EE', icon_emoji: '⭐', icon_url: null,
-    sort_order: 1, created_at: '',
-  },
+  { id: '1', user_id: 'dummy', name: '桜山あかり', color: '#FF3D87', icon_emoji: '🌸', icon_url: null, sort_order: 0, created_at: '' },
+  { id: '2', user_id: 'dummy', name: '星野ゆい', color: '#9B59B6', icon_emoji: '💫', icon_url: null, sort_order: 1, created_at: '' },
 ]
 
 type Props = {
@@ -61,9 +44,9 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
   const [loading, setLoading] = useState(true)
   const [editTarget, setEditTarget] = useState<Oshi | null>(null)
   const [editName, setEditName] = useState('')
+  const [editNameError, setEditNameError] = useState<string | null>(null)
   const [editBudget, setEditBudget] = useState('')
-  const [editEmoji, setEditEmoji] = useState('')
-  const [editColor, setEditColor] = useState('')
+  const [editBudgetError, setEditBudgetError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const sheetAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current
@@ -98,55 +81,43 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
       }
       setMonthlyTotals(totals)
     } catch {
-      // Supabase 未設定 or ネットワークエラー → ダミーデータ表示
       setOshis(DUMMY_OSHIS)
     } finally {
       setLoading(false)
     }
   }, [user, currentMonth])
 
-  useEffect(() => {
-    loadData()
-  }, [loadData])
+  useEffect(() => { loadData() }, [loadData])
 
   const openEdit = (oshi: Oshi) => {
     setEditTarget(oshi)
     setEditName(oshi.name)
-    setEditEmoji(oshi.icon_emoji)
-    setEditColor(oshi.color)
+    setEditNameError(null)
     const budget = budgets.find(b => b.oshi_id === oshi.id)
     setEditBudget(budget ? String(budget.amount) : '')
+    setEditBudgetError(null)
     setShowDeleteConfirm(false)
-    Animated.spring(sheetAnim, {
-      toValue: 0,
-      useNativeDriver: true,
-      tension: 65,
-      friction: 11,
-    }).start()
+    Animated.spring(sheetAnim, { toValue: 0, useNativeDriver: true, tension: 65, friction: 11 }).start()
   }
 
   const closeEdit = () => {
-    Animated.timing(sheetAnim, {
-      toValue: SCREEN_HEIGHT,
-      duration: 280,
-      useNativeDriver: true,
-    }).start(() => {
-      setEditTarget(null)
-      setShowDeleteConfirm(false)
-    })
+    Animated.timing(sheetAnim, { toValue: SCREEN_HEIGHT, duration: 280, useNativeDriver: true })
+      .start(() => { setEditTarget(null); setShowDeleteConfirm(false) })
   }
 
   const saveEdit = async () => {
     if (!editTarget || !user) return
-    if (!editName.trim()) {
-      Alert.alert('入力エラー', '推しの名前を入力してください')
-      return
-    }
+    const nameErr = validateOshiName(editName)
+    const budgetErr = validateBudget(editBudget)
+    setEditNameError(nameErr)
+    setEditBudgetError(budgetErr)
+    if (nameErr || budgetErr) return
+
     setSaving(true)
     try {
       await supabase
         .from('oshis')
-        .update({ name: editName.trim(), icon_emoji: editEmoji, color: editColor })
+        .update({ name: sanitizeText(editName) })
         .eq('id', editTarget.id)
 
       if (editBudget.trim()) {
@@ -154,17 +125,9 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
         if (!isNaN(budgetAmount) && budgetAmount > 0) {
           const existing = budgets.find(b => b.oshi_id === editTarget.id)
           if (existing) {
-            await supabase
-              .from('budgets')
-              .update({ amount: budgetAmount })
-              .eq('id', existing.id)
+            await supabase.from('budgets').update({ amount: budgetAmount }).eq('id', existing.id)
           } else {
-            await supabase.from('budgets').insert({
-              user_id: user.id,
-              oshi_id: editTarget.id,
-              amount: budgetAmount,
-              year_month: currentMonth,
-            })
+            await supabase.from('budgets').insert({ user_id: user.id, oshi_id: editTarget.id, amount: budgetAmount, year_month: currentMonth })
           }
         }
       }
@@ -202,11 +165,7 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
   const formatAmount = (amount: number) => `¥${amount.toLocaleString('ja-JP')}`
 
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.pinkVivid} />
-      </View>
-    )
+    return <View style={styles.loadingContainer}><ActivityIndicator size="large" color={colors.pinkVivid} /></View>
   }
 
   return (
@@ -222,36 +181,19 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
             <View style={styles.headerBtn} />
           )}
           <Text style={styles.headerLogo}>oshilog</Text>
-          <TouchableOpacity
-            style={styles.addBtn}
-            onPress={() => navigation.navigate('OshiNew')}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={[colors.gradientStart, colors.gradientEnd]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.addBtnGradient}
-            >
+          <TouchableOpacity style={styles.addBtn} onPress={() => navigation.navigate('OshiNew')} activeOpacity={0.8}>
+            <LinearGradient colors={[colors.gradientStart, colors.gradientEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.addBtnGradient}>
               <Text style={styles.addBtnText}>＋ 追加</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
 
-        <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <Text style={styles.pageTitle}>推し一覧</Text>
           <Text style={styles.pageSubtitle}>{now.getMonth() + 1}月の推し活まとめ</Text>
 
           {oshis.length === 0 ? (
-            <TouchableOpacity
-              style={styles.emptyCard}
-              onPress={() => navigation.navigate('OshiNew')}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity style={styles.emptyCard} onPress={() => navigation.navigate('OshiNew')} activeOpacity={0.8}>
               <Text style={styles.emptyIcon}>💝</Text>
               <Text style={styles.emptyTitle}>推しを追加しよう</Text>
               <Text style={styles.emptySubtitle}>タップして最初の推しを登録</Text>
@@ -271,11 +213,7 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
                       <Text style={styles.oshiName}>{oshi.name}</Text>
                       <Text style={styles.oshiSpent}>{formatAmount(spent)}</Text>
                     </View>
-                    <TouchableOpacity
-                      style={styles.editBtn}
-                      onPress={() => openEdit(oshi)}
-                      activeOpacity={0.7}
-                    >
+                    <TouchableOpacity style={styles.editBtn} onPress={() => openEdit(oshi)} activeOpacity={0.7}>
                       <Text style={styles.editBtnText}>編集</Text>
                     </TouchableOpacity>
                   </View>
@@ -283,24 +221,11 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
                   {budget > 0 && (
                     <View style={styles.oshiCardBottom}>
                       <View style={styles.progressBar}>
-                        <View
-                          style={[
-                            styles.progressFill,
-                            {
-                              width: `${ratio * 100}%`,
-                              backgroundColor: ratio >= 0.9 ? '#FF6B35' : oshi.color,
-                            },
-                          ]}
-                        />
+                        <View style={[styles.progressFill, { width: `${ratio * 100}%`, backgroundColor: ratio >= 0.9 ? '#FF6B35' : oshi.color }]} />
                       </View>
                       <View style={styles.budgetRow}>
-                        <Text style={styles.budgetText}>
-                          予算 {formatAmount(budget)}
-                        </Text>
-                        <Text style={[
-                          styles.budgetPercent,
-                          { color: ratio >= 0.9 ? '#FF6B35' : colors.textMid },
-                        ]}>
+                        <Text style={styles.budgetText}>予算 {formatAmount(budget)}</Text>
+                        <Text style={[styles.budgetPercent, { color: ratio >= 0.9 ? '#FF6B35' : colors.textMid }]}>
                           {Math.round(ratio * 100)}%
                         </Text>
                       </View>
@@ -316,17 +241,9 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
 
       {/* Edit Bottom Sheet */}
       {editTarget && (
-        <TouchableOpacity
-          style={styles.sheetOverlay}
-          onPress={closeEdit}
-          activeOpacity={1}
-        >
-          <Animated.View
-            style={[styles.sheet, { transform: [{ translateY: sheetAnim }] }]}
-          >
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            >
+        <TouchableOpacity style={styles.sheetOverlay} onPress={closeEdit} activeOpacity={1}>
+          <Animated.View style={[styles.sheet, { transform: [{ translateY: sheetAnim }] }]}>
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
               <TouchableOpacity activeOpacity={1}>
                 <SafeAreaView edges={['bottom']}>
                   <View style={styles.sheetHandle} />
@@ -334,37 +251,23 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
                   {showDeleteConfirm ? (
                     <View style={styles.sheetContent}>
                       <Text style={styles.sheetDeleteTitle}>
-                        「{editTarget.name}」を削除しますか？
+                        🗑️ 「{editTarget.name}」を削除しますか？
                       </Text>
                       <Text style={styles.sheetDeleteSub}>
                         削除すると支出記録も含めてすべて削除されます。この操作は取り消せません。
                       </Text>
-                      <TouchableOpacity
-                        style={styles.deleteConfirmBtn}
-                        onPress={deleteOshi}
-                        disabled={saving}
-                        activeOpacity={0.8}
-                      >
-                        {saving ? (
-                          <ActivityIndicator color={colors.white} size="small" />
-                        ) : (
-                          <Text style={styles.deleteConfirmBtnText}>削除する</Text>
-                        )}
+                      <TouchableOpacity style={styles.deleteConfirmBtn} onPress={deleteOshi} disabled={saving} activeOpacity={0.8}>
+                        {saving ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.deleteConfirmBtnText}>削除する</Text>}
                       </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.cancelBtn}
-                        onPress={() => setShowDeleteConfirm(false)}
-                        activeOpacity={0.7}
-                      >
+                      <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowDeleteConfirm(false)} activeOpacity={0.7}>
                         <Text style={styles.cancelBtnText}>キャンセル</Text>
                       </TouchableOpacity>
                     </View>
                   ) : (
-                    <ScrollView style={styles.sheetScroll} showsVerticalScrollIndicator={false}>
                     <View style={styles.sheetContent}>
                       <View style={styles.sheetHeader}>
-                        <View style={[styles.sheetAvatar, { backgroundColor: editColor + '30' }]}>
-                          <Text style={styles.sheetAvatarEmoji}>{editEmoji}</Text>
+                        <View style={[styles.sheetAvatar, { backgroundColor: editTarget.color + '30' }]}>
+                          <Text style={styles.sheetAvatarEmoji}>{editTarget.icon_emoji}</Text>
                         </View>
                         <Text style={styles.sheetTitle}>推しを編集</Text>
                       </View>
@@ -372,97 +275,41 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
                       <View style={styles.inputGroup}>
                         <Text style={styles.inputLabel}>推しの名前</Text>
                         <TextInput
-                          style={styles.input}
+                          style={[styles.input, editNameError ? styles.inputError : null]}
                           value={editName}
-                          onChangeText={setEditName}
+                          onChangeText={v => { setEditName(v); setEditNameError(validateOshiName(v)) }}
                           placeholder="名前を入力"
                           placeholderTextColor={colors.textLight}
                           maxLength={30}
                         />
-                      </View>
-
-                      <View style={styles.inputGroup}>
-                        <Text style={styles.inputLabel}>アイコン絵文字</Text>
-                        <View style={styles.emojiGrid}>
-                          {EMOJI_OPTIONS.map(emoji => (
-                            <TouchableOpacity
-                              key={emoji}
-                              style={[
-                                styles.emojiChip,
-                                editEmoji === emoji && { backgroundColor: editColor + '20', borderColor: editColor, borderWidth: 2 },
-                              ]}
-                              onPress={() => setEditEmoji(emoji)}
-                              activeOpacity={0.7}
-                            >
-                              <Text style={styles.emojiText}>{emoji}</Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </View>
-
-                      <View style={styles.inputGroup}>
-                        <Text style={styles.inputLabel}>テーマカラー</Text>
-                        <View style={styles.colorRow}>
-                          {COLOR_OPTIONS.map(color => (
-                            <TouchableOpacity
-                              key={color}
-                              style={[
-                                styles.colorCircle,
-                                { backgroundColor: color },
-                                editColor === color && styles.colorCircleSelected,
-                              ]}
-                              onPress={() => setEditColor(color)}
-                              activeOpacity={0.8}
-                            >
-                              {editColor === color && (
-                                <Text style={styles.colorCheck}>✓</Text>
-                              )}
-                            </TouchableOpacity>
-                          ))}
-                        </View>
+                        {editNameError ? <Text style={styles.errorText}>{editNameError}</Text> : null}
                       </View>
 
                       <View style={styles.inputGroup}>
                         <Text style={styles.inputLabel}>今月の予算（円）</Text>
                         <TextInput
-                          style={styles.input}
+                          style={[styles.input, editBudgetError ? styles.inputError : null]}
                           value={editBudget}
-                          onChangeText={setEditBudget}
-                          placeholder="例: 10000"
+                          onChangeText={v => { setEditBudget(v); setEditBudgetError(validateBudget(v)) }}
+                          placeholder="20000"
                           placeholderTextColor={colors.textLight}
                           keyboardType="number-pad"
                         />
+                        {editBudgetError ? <Text style={styles.errorText}>{editBudgetError}</Text> : null}
                       </View>
 
-                      <TouchableOpacity
-                        style={styles.saveBtn}
-                        onPress={saveEdit}
-                        disabled={saving}
-                        activeOpacity={0.85}
-                      >
-                        <LinearGradient
-                          colors={[colors.gradientStart, colors.gradientEnd]}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 0 }}
-                          style={styles.saveBtnGradient}
-                        >
-                          {saving ? (
-                            <ActivityIndicator color={colors.white} size="small" />
-                          ) : (
-                            <Text style={styles.saveBtnText}>保存する</Text>
-                          )}
+                      <TouchableOpacity style={styles.saveBtn} onPress={saveEdit} disabled={saving} activeOpacity={0.85}>
+                        <LinearGradient colors={[colors.gradientStart, colors.gradientEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.saveBtnGradient}>
+                          {saving ? <ActivityIndicator color={colors.white} size="small" /> : <Text style={styles.saveBtnText}>保存する</Text>}
                         </LinearGradient>
                       </TouchableOpacity>
 
-                      <TouchableOpacity
-                        style={styles.deleteBtn}
-                        onPress={() => setShowDeleteConfirm(true)}
-                        activeOpacity={0.7}
-                      >
+                      <View style={styles.divider} />
+
+                      <TouchableOpacity style={styles.deleteBtn} onPress={() => setShowDeleteConfirm(true)} activeOpacity={0.7}>
                         <Text style={styles.deleteBtnText}>この推しを削除</Text>
                       </TouchableOpacity>
                     </View>
-                    </ScrollView>
                   )}
                 </SafeAreaView>
               </TouchableOpacity>
@@ -475,355 +322,78 @@ export default function OshiListScreen({ navigation, onBack }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    backgroundColor: colors.cream,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: colors.cream,
-  },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: colors.cream,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  wrapper: { flex: 1, backgroundColor: colors.cream },
+  container: { flex: 1, backgroundColor: colors.cream },
+  loadingContainer: { flex: 1, backgroundColor: colors.cream, justifyContent: 'center', alignItems: 'center' },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.pinkSoft,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingVertical: 12,
+    backgroundColor: colors.white, borderBottomWidth: 1, borderBottomColor: colors.pinkSoft,
   },
-  headerBtn: {
-    width: 60,
-    height: 40,
-    justifyContent: 'center',
-  },
-  backArrow: {
-    fontSize: 22,
-    color: colors.textDark,
-    fontWeight: '600',
-  },
-  headerLogo: {
-    fontSize: 22,
-    fontStyle: 'italic',
-    fontWeight: '800',
-    color: colors.pinkVivid,
-    letterSpacing: -0.5,
-  },
-  addBtn: {
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  addBtnGradient: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-  },
-  addBtnText: {
-    color: colors.white,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
-  },
-  pageTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: colors.textDark,
-    marginBottom: 4,
-  },
-  pageSubtitle: {
-    fontSize: 14,
-    color: colors.textMid,
-    marginBottom: 20,
-  },
+  headerBtn: { width: 60, height: 40, justifyContent: 'center' },
+  backArrow: { fontSize: 22, color: colors.textDark, fontWeight: '600' },
+  headerLogo: { fontSize: 22, fontStyle: 'italic', fontWeight: '800', color: colors.pinkVivid, letterSpacing: -0.5, fontFamily: fonts.logo },
+  addBtn: { borderRadius: 20, overflow: 'hidden' },
+  addBtnGradient: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20 },
+  addBtnText: { color: colors.white, fontSize: 13, fontWeight: '700', fontFamily: fonts.bodyBold },
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 20 },
+  pageTitle: { fontSize: 24, fontWeight: '800', color: colors.textDark, marginBottom: 4, fontFamily: fonts.bodyBold },
+  pageSubtitle: { fontSize: 14, color: colors.textMid, marginBottom: 20, fontFamily: fonts.body },
   emptyCard: {
-    backgroundColor: colors.pinkSoft,
-    borderRadius: 20,
-    padding: 40,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.pinkMid,
-    marginTop: 20,
+    backgroundColor: colors.pinkSoft, borderRadius: 20, padding: 40, alignItems: 'center',
+    borderWidth: 1.5, borderColor: colors.pinkMid, marginTop: 20,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textDark,
-    marginBottom: 6,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: colors.textMid,
-  },
+  emptyIcon: { fontSize: 48, marginBottom: 12 },
+  emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.textDark, marginBottom: 6, fontFamily: fonts.bodyBold },
+  emptySubtitle: { fontSize: 14, color: colors.textMid, fontFamily: fonts.body },
   oshiCard: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: colors.cardShadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 1,
-    shadowRadius: 8,
-    elevation: 3,
+    backgroundColor: colors.white, borderRadius: 16, padding: 16, marginBottom: 12,
+    shadowColor: colors.cardShadow, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 1, shadowRadius: 8, elevation: 3,
   },
-  oshiCardTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  oshiAvatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  oshiEmoji: {
-    fontSize: 26,
-  },
-  oshiInfo: {
-    flex: 1,
-  },
-  oshiName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textDark,
-    marginBottom: 2,
-  },
-  oshiSpent: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.pinkVivid,
-  },
-  editBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  editBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textMid,
-  },
-  oshiCardBottom: {
-    marginTop: 12,
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: colors.pinkSoft,
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 6,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  budgetRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  budgetText: {
-    fontSize: 12,
-    color: colors.textLight,
-  },
-  budgetPercent: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
+  oshiCardTop: { flexDirection: 'row', alignItems: 'center' },
+  oshiAvatar: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  oshiEmoji: { fontSize: 26 },
+  oshiInfo: { flex: 1 },
+  oshiName: { fontSize: 16, fontWeight: '700', color: colors.textDark, marginBottom: 2, fontFamily: fonts.bodyBold },
+  oshiSpent: { fontSize: 14, fontWeight: '600', color: colors.pinkVivid, fontFamily: fonts.bodyMedium },
+  editBtn: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: colors.pinkSoft },
+  editBtnText: { fontSize: 13, fontWeight: '600', color: colors.pinkVivid, fontFamily: fonts.bodyMedium },
+  oshiCardBottom: { marginTop: 12 },
+  progressBar: { height: 6, backgroundColor: colors.pinkSoft, borderRadius: 3, overflow: 'hidden', marginBottom: 6 },
+  progressFill: { height: '100%', borderRadius: 3 },
+  budgetRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  budgetText: { fontSize: 12, color: colors.textLight, fontFamily: fonts.body },
+  budgetPercent: { fontSize: 12, fontWeight: '600', fontFamily: fonts.bodyMedium },
   // Bottom sheet
-  sheetOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(45, 27, 37, 0.5)',
-    justifyContent: 'flex-end',
-    zIndex: 100,
-  },
-  sheet: {
-    backgroundColor: colors.white,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 12,
-  },
-  sheetHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: colors.border,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  sheetContent: {
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 16,
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  sheetAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  sheetAvatarEmoji: {
-    fontSize: 22,
-  },
-  sheetTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textDark,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textMid,
-    marginBottom: 8,
-  },
+  sheetOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(45,27,37,0.5)', justifyContent: 'flex-end', zIndex: 100 },
+  sheet: { backgroundColor: colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 12 },
+  sheetHandle: { width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 4 },
+  sheetContent: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 16 },
+  sheetHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  sheetAvatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  sheetAvatarEmoji: { fontSize: 22 },
+  sheetTitle: { fontSize: 18, fontWeight: '700', color: colors.textDark, fontFamily: fonts.bodyBold },
+  inputGroup: { marginBottom: 16 },
+  inputLabel: { fontSize: 13, fontWeight: '600', color: colors.textMid, marginBottom: 8, fontFamily: fonts.bodyMedium },
   input: {
-    borderWidth: 1.5,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: colors.textDark,
-    backgroundColor: colors.cream,
+    borderWidth: 1.5, borderColor: colors.border, borderRadius: 12,
+    paddingHorizontal: 16, paddingVertical: 12,
+    fontSize: 15, color: colors.textDark, backgroundColor: colors.cream,
+    fontFamily: fonts.body,
   },
-  saveBtn: {
-    borderRadius: 14,
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
-  saveBtnGradient: {
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  saveBtnText: {
-    color: colors.white,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  deleteBtn: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  deleteBtnText: {
-    fontSize: 14,
-    color: '#FF6B6B',
-    fontWeight: '600',
-  },
-  sheetDeleteTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.textDark,
-    textAlign: 'center',
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  sheetDeleteSub: {
-    fontSize: 13,
-    color: colors.textMid,
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 20,
-  },
-  deleteConfirmBtn: {
-    backgroundColor: '#FF6B6B',
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  deleteConfirmBtnText: {
-    color: colors.white,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  cancelBtn: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  cancelBtnText: {
-    fontSize: 15,
-    color: colors.textMid,
-    fontWeight: '600',
-  },
-  sheetScroll: {
-    maxHeight: 540,
-  },
-  emojiGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  emojiChip: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: colors.cream,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.border,
-  },
-  emojiText: {
-    fontSize: 24,
-  },
-  colorRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  colorCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  colorCircleSelected: {
-    borderWidth: 3,
-    borderColor: colors.white,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  colorCheck: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '800',
-  },
+  inputError: { borderColor: '#EF5350' },
+  errorText: { fontSize: 12, color: '#EF5350', marginTop: 4, fontFamily: fonts.body },
+  saveBtn: { borderRadius: 14, overflow: 'hidden', marginBottom: 4 },
+  saveBtnGradient: { paddingVertical: 14, alignItems: 'center' },
+  saveBtnText: { color: colors.white, fontSize: 15, fontWeight: '700', fontFamily: fonts.bodyBold },
+  divider: { height: 1, backgroundColor: colors.border, marginVertical: 8 },
+  deleteBtn: { paddingVertical: 12, alignItems: 'center' },
+  deleteBtnText: { fontSize: 14, color: '#FF6B6B', fontWeight: '600', fontFamily: fonts.bodyMedium },
+  sheetDeleteTitle: { fontSize: 17, fontWeight: '700', color: colors.textDark, textAlign: 'center', marginBottom: 12, marginTop: 8, fontFamily: fonts.bodyBold },
+  sheetDeleteSub: { fontSize: 13, color: colors.textMid, textAlign: 'center', marginBottom: 24, lineHeight: 20, fontFamily: fonts.body },
+  deleteConfirmBtn: { backgroundColor: '#FF6B6B', borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginBottom: 12 },
+  deleteConfirmBtnText: { color: colors.white, fontSize: 15, fontWeight: '700', fontFamily: fonts.bodyBold },
+  cancelBtn: { paddingVertical: 12, alignItems: 'center' },
+  cancelBtnText: { fontSize: 15, color: colors.textMid, fontWeight: '600', fontFamily: fonts.bodyMedium },
 })

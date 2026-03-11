@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { supabase } from '../lib/supabase/client'
 import { colors } from '../constants/colors'
+import { fonts } from '../constants/fonts'
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('')
@@ -191,8 +192,7 @@ const styles = StyleSheet.create({
   },
   logoText: {
     fontSize: 32,
-    fontStyle: 'italic',
-    fontWeight: '800',
+    fontFamily: fonts.logo,
     color: colors.pinkVivid,
     letterSpacing: -0.5,
     marginBottom: 8,
@@ -201,6 +201,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textMid,
     textAlign: 'center',
+    fontFamily: fonts.body,
   },
   card: {
     backgroundColor: colors.white,
@@ -214,7 +215,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
     color: colors.textDark,
     marginBottom: 24,
     textAlign: 'center',
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fonts.bodyMedium,
     color: colors.textMid,
     marginBottom: 8,
   },
@@ -237,6 +238,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.textDark,
     backgroundColor: colors.cream,
+    fontFamily: fonts.body,
   },
   authButton: {
     marginTop: 8,
@@ -256,7 +258,7 @@ const styles = StyleSheet.create({
   authButtonText: {
     color: colors.white,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
     letterSpacing: 0.3,
   },
   switchButton: {
@@ -266,15 +268,17 @@ const styles = StyleSheet.create({
   switchText: {
     fontSize: 14,
     color: colors.textMid,
+    fontFamily: fonts.body,
   },
   switchTextAccent: {
     color: colors.pinkVivid,
-    fontWeight: '600',
+    fontFamily: fonts.bodyMedium,
   },
   footer: {
     textAlign: 'center',
     marginTop: 32,
     fontSize: 14,
     color: colors.textLight,
+    fontFamily: fonts.body,
   },
 })

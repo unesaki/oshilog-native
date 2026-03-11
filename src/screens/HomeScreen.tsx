@@ -17,6 +17,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { supabase } from '../lib/supabase/client'
 import { useAuth } from '../context/AuthContext'
 import { colors } from '../constants/colors'
+import { fonts } from '../constants/fonts'
 import { Oshi, Expense, Budget } from '../types'
 import { RootStackParamList } from '../navigation/RootNavigator'
 
@@ -265,7 +266,8 @@ export default function HomeScreen({ navigation, onTabChange }: Props) {
         >
           {/* Month Total Banner */}
           <LinearGradient
-            colors={[colors.gradientStart, colors.gradientEnd]}
+            colors={['#FF3D87', '#FF8FB8', '#FFB6D0']}
+            locations={[0, 0.55, 1]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.banner}
@@ -471,8 +473,7 @@ const styles = StyleSheet.create({
   },
   headerLogo: {
     fontSize: 22,
-    fontStyle: 'italic',
-    fontWeight: '800',
+    fontFamily: fonts.logo,
     color: colors.pinkVivid,
     letterSpacing: -0.5,
   },
@@ -499,19 +500,20 @@ const styles = StyleSheet.create({
   bannerLabel: {
     color: 'rgba(255,255,255,0.85)',
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fonts.bodyMedium,
     marginBottom: 6,
   },
   bannerAmount: {
     color: colors.white,
     fontSize: 36,
-    fontWeight: '800',
+    fontFamily: fonts.bodyBold,
     letterSpacing: -1,
     marginBottom: 6,
   },
   bannerSub: {
     color: 'rgba(255,255,255,0.8)',
     fontSize: 13,
+    fontFamily: fonts.body,
   },
   section: {
     marginTop: 24,
@@ -525,13 +527,13 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
     color: colors.textDark,
   },
   seeAll: {
     fontSize: 13,
     color: colors.pinkVivid,
-    fontWeight: '600',
+    fontFamily: fonts.bodyMedium,
   },
   oshiCard: {
     backgroundColor: colors.white,
@@ -570,12 +572,12 @@ const styles = StyleSheet.create({
   },
   oshiName: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
     color: colors.textDark,
   },
   oshiSpent: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
     color: colors.pinkVivid,
   },
   progressBar: {
@@ -592,6 +594,7 @@ const styles = StyleSheet.create({
   budgetText: {
     fontSize: 11,
     color: colors.textLight,
+    fontFamily: fonts.body,
   },
   emptyCard: {
     backgroundColor: colors.pinkSoft,
@@ -608,7 +611,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: colors.textMid,
-    fontWeight: '600',
+    fontFamily: fonts.bodyMedium,
   },
   emptyRecord: {
     backgroundColor: colors.white,
@@ -619,6 +622,7 @@ const styles = StyleSheet.create({
   emptyRecordText: {
     fontSize: 14,
     color: colors.textLight,
+    fontFamily: fonts.body,
   },
   expenseCard: {
     backgroundColor: colors.white,
@@ -647,17 +651,18 @@ const styles = StyleSheet.create({
   expenseCategoryText: {
     fontSize: 11,
     color: colors.textMid,
-    fontWeight: '600',
+    fontFamily: fonts.bodyMedium,
   },
   expenseTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.bodyMedium,
     color: colors.textDark,
     marginBottom: 2,
   },
   expenseOshi: {
     fontSize: 12,
     color: colors.textLight,
+    fontFamily: fonts.body,
   },
   expenseRight: {
     alignItems: 'flex-end',
@@ -665,13 +670,14 @@ const styles = StyleSheet.create({
   },
   expenseAmount: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
     color: colors.pinkVivid,
     marginBottom: 2,
   },
   expenseDate: {
     fontSize: 12,
     color: colors.textLight,
+    fontFamily: fonts.body,
   },
   // Hamburger menu
   menuOverlay: {
@@ -698,8 +704,7 @@ const styles = StyleSheet.create({
   },
   menuLogo: {
     fontSize: 28,
-    fontStyle: 'italic',
-    fontWeight: '800',
+    fontFamily: fonts.logo,
     color: colors.pinkVivid,
     letterSpacing: -0.5,
     marginTop: 16,
@@ -718,7 +723,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fonts.bodyMedium,
     color: colors.textDark,
     flex: 1,
   },
@@ -731,7 +736,7 @@ const styles = StyleSheet.create({
   premiumBadgeText: {
     fontSize: 11,
     color: colors.pinkVivid,
-    fontWeight: '700',
+    fontFamily: fonts.bodyBold,
   },
   menuDivider: {
     height: 1,
