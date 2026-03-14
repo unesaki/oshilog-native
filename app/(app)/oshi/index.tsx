@@ -122,7 +122,7 @@ export default function OshiListScreen() {
       }
 
       setOshis((prev) => prev.map((o) => o.id === editingOshi.id ? { ...o, name: newName } : o))
-      showToast('保存したよ🌸')
+      showToast('保存したよ')
       setEditingOshi(null)
     } catch (err) {
       console.error('[oshi update error]', err)
@@ -191,7 +191,7 @@ export default function OshiListScreen() {
         {oshis.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyEmoji}>🌸</Text>
-            <Text style={styles.emptyText}>まだ推しが登録されていないよ🌸</Text>
+            <Text style={styles.emptyText}>まだ推しが登録されていないよ</Text>
             <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/oshi/new')} activeOpacity={0.8}>
               <Text style={styles.addBtnText}>推しを追加する</Text>
             </TouchableOpacity>

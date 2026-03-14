@@ -330,7 +330,7 @@ export default function AddExpenseScreen() {
           {submitting ? (
             <ActivityIndicator color={Colors.white} />
           ) : (
-            <Text style={styles.submitBtnText}>記録する 🌸</Text>
+            <Text style={styles.submitBtnText}>記録する</Text>
           )}
         </TouchableOpacity>
       </ScrollView>

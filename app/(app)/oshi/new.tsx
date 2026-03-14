@@ -92,7 +92,7 @@ export default function OshiNewScreen() {
         })
       }
 
-      showToast('推しを登録したよ🌸')
+      showToast('推しを登録したよ')
       setTimeout(() => router.back(), 800)
     } catch (err) {
       console.error('[oshi insert error]', err)
@@ -248,7 +248,10 @@ export default function OshiNewScreen() {
                 <Text style={styles.planFreeValue}>推し 3人まで</Text>
               </View>
               <View style={styles.planPremium}>
-                <Text style={styles.planPremiumLabel}>💎 プレミアム</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+                  <FontAwesome5 name="gem" size={10} color="rgba(255,255,255,0.8)" />
+                  <Text style={styles.planPremiumLabel}>プレミアム</Text>
+                </View>
                 <Text style={styles.planPremiumValue}>推し 無制限</Text>
               </View>
             </View>
@@ -343,7 +346,7 @@ const styles = StyleSheet.create({
   planPremium: {
     flex: 1, backgroundColor: Colors.pinkVivid, borderRadius: 12, padding: 12, alignItems: 'center',
   },
-  planPremiumLabel: { fontSize: 11, fontFamily: Fonts.zenMaruRegular, color: 'rgba(255,255,255,0.8)', marginBottom: 4 },
+  planPremiumLabel: { fontSize: 11, fontFamily: Fonts.zenMaruRegular, color: 'rgba(255,255,255,0.8)' },
   planPremiumValue: { fontSize: 13, fontFamily: Fonts.zenMaruBold, color: Colors.white },
   upgradeBtn: {
     height: 48, borderRadius: 12, backgroundColor: Colors.pinkVivid,
