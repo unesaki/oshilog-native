@@ -8,6 +8,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Modal,
+  useWindowDimensions,
 } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -24,6 +25,11 @@ import { Fonts } from '@/constants/fonts'
 
 export default function OshiNewScreen() {
   const { toast, showToast } = useToast()
+  const { width: screenWidth } = useWindowDimensions()
+  // scrollContent padding: 16×2=32, emojiGrid gap: 6×5=30, 6 buttons per row
+  const emojiBtnSize = Math.floor((screenWidth - 32 - 30) / 6)
+  // colorGrid gap: 8×5=40, 6 buttons per row (approx)
+  const colorBtnSize = Math.floor((screenWidth - 32 - 40) / 6)
 
   const [userId, setUserId] = useState<string | null>(null)
   const [oshiCount, setOshiCount] = useState(0)
@@ -135,7 +141,11 @@ export default function OshiNewScreen() {
               return (
                 <TouchableOpacity
                   key={emoji}
-                  style={[styles.emojiBtn, active && { borderColor: selectedColor, backgroundColor: `${selectedColor}18` }]}
+                  style={[
+                    styles.emojiBtn,
+                    { width: emojiBtnSize, height: emojiBtnSize },
+                    active && { borderColor: selectedColor, backgroundColor: `${selectedColor}18` },
+                  ]}
                   onPress={() => setSelectedEmoji(emoji)}
                   activeOpacity={0.7}
                 >
@@ -181,7 +191,7 @@ export default function OshiNewScreen() {
                   key={color}
                   style={[
                     styles.colorBtn,
-                    { backgroundColor: color },
+                    { backgroundColor: color, width: colorBtnSize, height: colorBtnSize },
                     active && { borderWidth: 3, borderColor: Colors.white },
                   ]}
                   onPress={() => setSelectedColor(color)}
@@ -298,8 +308,7 @@ const styles = StyleSheet.create({
   emojiHint: { fontSize: 12, fontFamily: Fonts.zenMaruRegular, color: '#aaa' },
   emojiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   emojiBtn: {
-    width: '14.5%', aspectRatio: 1, borderRadius: 10,
-    alignItems: 'center', justifyContent: 'center',
+    borderRadius: 10,
     backgroundColor: Colors.pinkSoft, borderWidth: 2, borderColor: 'transparent',
   },
   // 入力
@@ -316,7 +325,7 @@ const styles = StyleSheet.create({
   // カラー
   colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   colorBtn: {
-    width: '14%', aspectRatio: 1, borderRadius: 99,
+    borderRadius: 99,
     alignItems: 'center', justifyContent: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15, shadowRadius: 2, elevation: 2,
