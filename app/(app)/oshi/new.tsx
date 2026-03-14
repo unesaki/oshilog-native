@@ -185,7 +185,13 @@ export default function OshiNewScreen() {
                   onPress={() => setSelectedColor(color)}
                   activeOpacity={0.7}
                 >
-                  {active && <Ionicons name="checkmark" size={16} color={Colors.white} style={{ lineHeight: 16 }} />}
+                  {active && (
+                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={{ transform: [{ translateY: -1.5 }] }}>
+                        <Ionicons name="checkmark" size={18} color={Colors.white} />
+                      </View>
+                    </View>
+                  )}
                 </TouchableOpacity>
               )
             })}
