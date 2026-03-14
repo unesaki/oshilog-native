@@ -4,6 +4,9 @@ import { StatusBar } from 'expo-status-bar'
 import * as SplashScreen from 'expo-splash-screen'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { useFonts, PlayfairDisplay_700Bold_Italic } from '@expo-google-fonts/playfair-display'
+import { ZenMaruGothic_400Regular, ZenMaruGothic_700Bold } from '@expo-google-fonts/zen-maru-gothic'
+import { Ionicons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons'
 import { supabase } from '@/lib/supabase'
 import type { Session } from '@supabase/supabase-js'
 import { useRouter, useSegments } from 'expo-router'
@@ -15,6 +18,15 @@ export default function RootLayout() {
   const [isReady, setIsReady] = useState(false)
   const router = useRouter()
   const segments = useSegments()
+
+  const [fontsLoaded] = useFonts({
+    PlayfairDisplay_700Bold_Italic,
+    ZenMaruGothic_400Regular,
+    ZenMaruGothic_700Bold,
+    ...Ionicons.font,
+    ...FontAwesome5.font,
+    ...MaterialCommunityIcons.font,
+  })
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -30,7 +42,7 @@ export default function RootLayout() {
   }, [])
 
   useEffect(() => {
-    if (!isReady) return
+    if (!isReady || !fontsLoaded) return
 
     const inAuthGroup = segments[0] === '(auth)'
 
@@ -41,7 +53,7 @@ export default function RootLayout() {
     }
 
     SplashScreen.hideAsync()
-  }, [session, isReady, segments])
+  }, [session, isReady, fontsLoaded, segments])
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

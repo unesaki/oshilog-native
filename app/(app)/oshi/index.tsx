@@ -11,6 +11,7 @@ import {
   TextInput,
 } from 'react-native'
 import { router, useFocusEffect } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '@/lib/supabase'
 import { Colors } from '@/constants/colors'
 import { formatAmount, lightenHex } from '@/lib/utils'
@@ -20,6 +21,8 @@ import AppHeader, { HeaderTextButton } from '@/components/AppHeader'
 import BottomTabBar from '@/components/BottomTabBar'
 import Toast from '@/components/Toast'
 import { useToast } from '@/components/useToast'
+import OshiIcon from '@/components/OshiIcon'
+import { Fonts } from '@/constants/fonts'
 
 type ExpenseSummary = { id: string; oshi_id: string; amount: number }
 
@@ -169,7 +172,10 @@ export default function OshiListScreen() {
       />
 
       <View style={styles.listHeader}>
-        <Text style={styles.listTitle}>💝 推し一覧</Text>
+        <View style={styles.listTitleRow}>
+          <Ionicons name="heart" size={12} color="#FF3D87" />
+          <Text style={styles.listTitle}>推し一覧</Text>
+        </View>
         <Text style={styles.listCount}>{oshis.length}人</Text>
         <Text style={styles.listPeriod}>{currentYear}年{currentMonth}月</Text>
       </View>
@@ -207,7 +213,7 @@ export default function OshiListScreen() {
                   activeOpacity={0.7}
                 >
                   <View style={[styles.avatar, { backgroundColor: `${color}88` }]}>
-                    <Text style={{ fontSize: 20 }}>{oshi.icon_emoji}</Text>
+                    <OshiIcon emoji={oshi.icon_emoji || '🌸'} size={20} color={color} />
                   </View>
                   <View style={styles.oshiInfo}>
                     <Text style={styles.oshiName} numberOfLines={1}>{oshi.name}</Text>
@@ -254,7 +260,7 @@ export default function OshiListScreen() {
           <View style={styles.sheetHandle} />
           {deleteConfirm ? (
             <View style={styles.deleteConfirm}>
-              <Text style={styles.deleteIcon}>🗑️</Text>
+              <Ionicons name="trash-outline" size={36} color="#ef4444" style={{ marginBottom: 8 }} />
               <Text style={styles.deleteTitle}>{editingOshi?.name} を削除する</Text>
               <Text style={styles.deleteMsg}>この推しの支出データもすべて削除されます。{'\n'}この操作は取り消せません。</Text>
               <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} activeOpacity={0.8}>
@@ -266,7 +272,12 @@ export default function OshiListScreen() {
             </View>
           ) : (
             <>
-              <Text style={styles.sheetTitle}>{editingOshi?.icon_emoji} {editingOshi?.name} の設定</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+                <View style={styles.sheetTitleIcon}>
+                  <OshiIcon emoji={editingOshi?.icon_emoji || '🌸'} size={16} color={Colors.pinkVivid} />
+                </View>
+                <Text style={styles.sheetTitle}>{editingOshi?.name} の設定</Text>
+              </View>
               <Text style={styles.fieldLabel}>推しの名前</Text>
               <TextInput
                 style={[styles.sheetInput, nameError ? styles.sheetInputError : null]}
@@ -323,14 +334,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.pinkSoft,
     alignItems: 'center', justifyContent: 'center',
   },
-  backBtnText: { fontSize: 14, fontWeight: '700', color: Colors.textMid },
+  backBtnText: { fontSize: 14, fontFamily: Fonts.zenMaruBold, color: Colors.textMid },
   listHeader: {
     flexDirection: 'row', alignItems: 'baseline', gap: 6,
     paddingHorizontal: 20, paddingTop: 12, paddingBottom: 6,
   },
-  listTitle: { fontSize: 11, fontWeight: '700', color: Colors.textMid, letterSpacing: 1.5 },
-  listCount: { fontSize: 10, color: Colors.textLight },
-  listPeriod: { fontSize: 10, color: Colors.textLight, marginLeft: 'auto' },
+  listTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  listTitle: { fontSize: 11, fontFamily: Fonts.zenMaruBold, color: Colors.textMid, letterSpacing: 1.5 },
+  listCount: { fontSize: 10, fontFamily: Fonts.zenMaruRegular, color: Colors.textLight },
+  listPeriod: { fontSize: 10, fontFamily: Fonts.zenMaruRegular, color: Colors.textLight, marginLeft: 'auto' },
   oshiCard: {
     backgroundColor: Colors.white, borderRadius: 16,
     shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 3 },
@@ -345,19 +357,19 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   oshiInfo: { flex: 1, minWidth: 0 },
-  oshiName: { fontSize: 14, fontWeight: '700', color: Colors.textDark, marginBottom: 5 },
+  oshiName: { fontSize: 14, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, marginBottom: 5 },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   progressBg: { flex: 1, height: 4, borderRadius: 99, backgroundColor: Colors.pinkSoft, overflow: 'hidden' },
   progressBar: { height: '100%', borderRadius: 99 },
   progressLabel: { fontSize: 9, color: Colors.textLight, flexShrink: 0 },
-  noBudgetLabel: { fontSize: 10, color: Colors.textLight },
-  spendAmount: { fontSize: 15, fontWeight: '700', color: Colors.textDark, flexShrink: 0 },
+  noBudgetLabel: { fontSize: 10, fontFamily: Fonts.zenMaruRegular, color: Colors.textLight },
+  spendAmount: { fontSize: 15, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, flexShrink: 0 },
   editBtn: {
     height: 30, paddingHorizontal: 12, borderRadius: 99,
     backgroundColor: Colors.pinkSoft, alignSelf: 'center',
     alignItems: 'center', justifyContent: 'center', marginRight: 8,
   },
-  editBtnText: { fontSize: 11, fontWeight: '700', color: Colors.textMid },
+  editBtnText: { fontSize: 11, fontFamily: Fonts.zenMaruBold, color: Colors.textMid },
   emptyCard: {
     backgroundColor: Colors.white, borderRadius: 16, padding: 40,
     alignItems: 'center', marginTop: 8,
@@ -365,14 +377,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1, shadowRadius: 8, elevation: 3,
   },
   emptyEmoji: { fontSize: 36, marginBottom: 10 },
-  emptyText: { fontSize: 13, color: Colors.textLight, marginBottom: 20, lineHeight: 20 },
+  emptyText: { fontSize: 13, fontFamily: Fonts.zenMaruRegular, color: Colors.textLight, marginBottom: 20, lineHeight: 20 },
   addBtn: {
     paddingHorizontal: 28, paddingVertical: 11, borderRadius: 999,
     backgroundColor: Colors.pinkVivid,
     shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35, shadowRadius: 7, elevation: 5,
   },
-  addBtnText: { color: Colors.white, fontSize: 14, fontWeight: '700' },
+  addBtnText: { color: Colors.white, fontSize: 14, fontFamily: Fonts.zenMaruBold },
   // Sheet
   sheetBackdrop: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
@@ -391,12 +403,13 @@ const styles = StyleSheet.create({
     width: 36, height: 4, borderRadius: 999, backgroundColor: Colors.pinkSoft,
     alignSelf: 'center', marginBottom: 20,
   },
-  sheetTitle: { fontSize: 16, fontWeight: '700', color: Colors.textDark, marginBottom: 20 },
-  fieldLabel: { fontSize: 10, fontWeight: '700', color: Colors.textMid, letterSpacing: 1, marginBottom: 6 },
+  sheetTitle: { fontSize: 16, fontFamily: Fonts.zenMaruBold, color: Colors.textDark },
+  sheetTitleIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.pinkSoft, alignItems: 'center', justifyContent: 'center' },
+  fieldLabel: { fontSize: 10, fontFamily: Fonts.zenMaruBold, color: Colors.textMid, letterSpacing: 1, marginBottom: 6 },
   sheetInput: {
     height: 44, borderRadius: 12, borderWidth: 2, borderColor: Colors.pinkSoft,
     backgroundColor: Colors.white, paddingHorizontal: 14,
-    fontSize: 14, fontWeight: '700', color: Colors.textDark,
+    fontSize: 14, fontFamily: Fonts.zenMaruBold, color: Colors.textDark,
   },
   sheetInputError: { borderColor: Colors.error },
   budgetInputWrap: { position: 'relative', flexDirection: 'row', alignItems: 'center' },
@@ -408,23 +421,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35, shadowRadius: 8, elevation: 5,
   },
   saveBtnDisabled: { backgroundColor: Colors.pinkLight, shadowOpacity: 0, elevation: 0 },
-  saveBtnText: { color: Colors.white, fontSize: 15, fontWeight: '700' },
+  saveBtnText: { color: Colors.white, fontSize: 15, fontFamily: Fonts.zenMaruBold },
   divider: { height: 1, backgroundColor: Colors.pinkSoft, marginVertical: 12 },
   dangerBtn: {
     height: 44, borderRadius: 12, borderWidth: 1.5, borderColor: Colors.error,
     alignItems: 'center', justifyContent: 'center',
   },
-  dangerBtnText: { color: Colors.error, fontSize: 14, fontWeight: '700' },
+  dangerBtnText: { color: Colors.error, fontSize: 14, fontFamily: Fonts.zenMaruBold },
   errorText: { fontSize: 10, color: Colors.error, marginTop: 2 },
   // Delete confirm
   deleteConfirm: { alignItems: 'center', paddingVertical: 8 },
-  deleteIcon: { fontSize: 32, marginBottom: 8 },
-  deleteTitle: { fontSize: 16, fontWeight: '700', color: Colors.textDark, marginBottom: 6 },
+  deleteTitle: { fontSize: 16, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, marginBottom: 6 },
   deleteMsg: { fontSize: 12, color: Colors.textLight, lineHeight: 20, textAlign: 'center', marginBottom: 24 },
   deleteBtn: {
     width: '100%', height: 48, borderRadius: 12, backgroundColor: Colors.error,
     alignItems: 'center', justifyContent: 'center', marginBottom: 10,
   },
-  deleteBtnText: { color: Colors.white, fontSize: 15, fontWeight: '700' },
-  cancelText: { fontSize: 14, color: Colors.textLight, paddingVertical: 8 },
+  deleteBtnText: { color: Colors.white, fontSize: 15, fontFamily: Fonts.zenMaruBold },
+  cancelText: { fontSize: 14, fontFamily: Fonts.zenMaruRegular, color: Colors.textLight, paddingVertical: 8 },
 })

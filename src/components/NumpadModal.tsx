@@ -8,6 +8,7 @@ import {
   Pressable,
 } from 'react-native'
 import { Colors, NUMPAD } from '@/constants/colors'
+import { Fonts } from '@/constants/fonts'
 
 type Props = {
   visible: boolean
@@ -74,17 +75,19 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 11,
+    fontFamily: Fonts.zenMaruRegular,
     color: Colors.textLight,
     marginBottom: 4,
   },
   amount: {
     fontSize: 40,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textDark,
     letterSpacing: -1,
   },
   error: {
     fontSize: 11,
+    fontFamily: Fonts.zenMaruRegular,
     color: Colors.error,
     marginTop: 4,
   },
@@ -114,7 +117,7 @@ const styles = StyleSheet.create({
   },
   keyText: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textDark,
   },
   keyTextOk: {
