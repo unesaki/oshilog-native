@@ -50,6 +50,5 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 13,
     fontFamily: Fonts.zenMaruBold,
-    whiteSpace: 'nowrap',
   },
 })
