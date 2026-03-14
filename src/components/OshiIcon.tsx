@@ -25,15 +25,9 @@ function renderIcon(emoji: string, size: number, color: string) {
 }
 
 export default function OshiIcon({ emoji, size, color }: Props) {
-  // Vector icon fonts render glyphs at their baseline, which sits slightly below
-  // the mathematical center of the em square. translateY shifts the glyph up to
-  // visually center it within the container.
-  const offset = -(size * 0.08)
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={{ transform: [{ translateY: offset }] }}>
-        {renderIcon(emoji, size, color)}
-      </View>
+      {renderIcon(emoji, size, color)}
     </View>
   )
 }
