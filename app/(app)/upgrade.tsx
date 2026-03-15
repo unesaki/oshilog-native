@@ -120,15 +120,15 @@ const styles = StyleSheet.create({
   heroTitle: { fontSize: 24, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, marginBottom: 8 },
   heroSubtitle: { fontSize: 14, color: Colors.textMid, textAlign: 'center' },
   // プラン比較
-  planRow: { flexDirection: 'row', gap: 10, marginBottom: 24 },
+  planRow: { flexDirection: 'row', marginBottom: 24 },
   planFree: {
-    flex: 1, backgroundColor: Colors.white, borderRadius: 16, padding: 16,
+    flex: 1, marginRight: 5, backgroundColor: Colors.white, borderRadius: 16, padding: 16,
     borderWidth: 1.5, borderColor: Colors.pinkSoft,
     shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
   planPremium: {
-    flex: 1, backgroundColor: Colors.pinkVivid, borderRadius: 16, padding: 16,
+    flex: 1, marginLeft: 5, backgroundColor: Colors.pinkVivid, borderRadius: 16, padding: 16,
     shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35, shadowRadius: 10, elevation: 6,
   },
