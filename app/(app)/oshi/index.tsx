@@ -190,7 +190,7 @@ export default function OshiListScreen() {
       >
         {oshis.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyEmoji}>🌸</Text>
+            <Ionicons name="heart-outline" size={36} color={Colors.pinkLight} style={{ marginBottom: 10 }} />
             <Text style={styles.emptyText}>まだ推しが登録されていないよ</Text>
             <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/oshi/new')} activeOpacity={0.8}>
               <Text style={styles.addBtnText}>推しを追加する</Text>
