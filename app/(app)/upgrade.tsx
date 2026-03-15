@@ -25,7 +25,6 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
 import { Colors } from '@/constants/colors'
 import AppHeader, { HeaderTextButton } from '@/components/AppHeader'
 import { Fonts } from '@/constants/fonts'
@@ -53,7 +52,6 @@ export default function UpgradeScreen() {
       >
         {/* ヒーロー */}
         <View style={styles.hero}>
-          <FontAwesome5 name="gem" size={56} color="#9B59B6" style={{ marginBottom: 12 }} />
           <Text style={styles.heroTitle}>プレミアムプラン</Text>
           <Text style={styles.heroSubtitle}>推し活をもっと楽しく、もっと自由に。</Text>
         </View>
@@ -104,7 +102,7 @@ export default function UpgradeScreen() {
 
         <Text style={styles.disclaimer}>
           購入はApp Store / Google Playを通じて行われます。{'\n'}
-          サブスクリプションは次の請求日の24時間前までにキャンセルしない限り自動更新されます。
+          サブスクリプションは次の請求日の24時間前までに{'\n'}キャンセルしない限り自動更新されます。
         </Text>
       </ScrollView>
     </View>
@@ -114,21 +112,21 @@ export default function UpgradeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.cream },
   scroll: { flex: 1 },
-  scrollContent: { padding: 20, paddingBottom: 40 },
+  scrollContent: { padding: 20, paddingBottom: 80 },
   // ヒーロー
-  hero: { alignItems: 'center', paddingVertical: 24 },
+  hero: { alignItems: 'center', paddingVertical: 12 },
   heroTitle: { fontSize: 24, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, marginBottom: 8 },
   heroSubtitle: { fontSize: 14, color: Colors.textMid, textAlign: 'center' },
   // プラン比較
-  planRow: { flexDirection: 'row', gap: 10, marginBottom: 24 },
+  planRow: { flexDirection: 'row', marginBottom: 24 },
   planFree: {
-    flex: 1, backgroundColor: Colors.white, borderRadius: 16, padding: 16,
+    flex: 1, marginRight: 5, backgroundColor: Colors.white, borderRadius: 16, padding: 16,
     borderWidth: 1.5, borderColor: Colors.pinkSoft,
     shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
   planPremium: {
-    flex: 1, backgroundColor: Colors.pinkVivid, borderRadius: 16, padding: 16,
+    flex: 1, marginLeft: 5, backgroundColor: Colors.pinkVivid, borderRadius: 16, padding: 16,
     shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35, shadowRadius: 10, elevation: 6,
   },

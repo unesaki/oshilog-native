@@ -152,9 +152,8 @@ export default function HomeScreen() {
           <Text style={styles.bannerAmount}>¥{formatAmount(monthTotal)}</Text>
           <Text style={styles.bannerDiff}>
             {lastMonthDiff >= 0
-              ? `先月より ¥${formatAmount(lastMonthDiff)} 少ないよ `
-              : `先月より ¥${formatAmount(Math.abs(lastMonthDiff))} 多いよ `}
-            <Text style={{ fontFamily: undefined }}>{lastMonthDiff >= 0 ? '✨' : '💸'}</Text>
+              ? `先月より ¥${formatAmount(lastMonthDiff)} 少ないよ`
+              : `先月より ¥${formatAmount(Math.abs(lastMonthDiff))} 多いよ`}
           </Text>
         </LinearGradient>
 
