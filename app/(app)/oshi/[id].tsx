@@ -10,6 +10,7 @@ import {
   Modal,
   RefreshControl,
 } from 'react-native'
+import DateTimePicker from '@react-native-community/datetimepicker'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
@@ -75,6 +76,8 @@ export default function OshiDetailScreen() {
   const [editDate, setEditDate] = useState('')
   const [editErrors, setEditErrors] = useState<Record<string, string>>({})
   const [expenseSaving, setExpenseSaving] = useState(false)
+  const [dateModalOpen, setDateModalOpen] = useState(false)
+  const [tempDate, setTempDate] = useState(new Date())
 
   async function fetchData() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -537,9 +540,17 @@ export default function OshiDetailScreen() {
 
             <View style={styles.editSection}>
               <Text style={styles.editSectionLabel}>日付</Text>
-              <View style={[styles.dateDisplay, editErrors.date ? styles.inputError : null]}>
+              <TouchableOpacity
+                style={[styles.dateDisplay, editErrors.date ? styles.inputError : null]}
+                onPress={() => {
+                  setTempDate(editDate ? new Date(editDate) : new Date())
+                  setDateModalOpen(true)
+                }}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.dateBtnText}>{editDate ? formatDate(editDate) : '日付を選択'}</Text>
-              </View>
+                <Text style={styles.dateChangeHint}>変更 ›</Text>
+              </TouchableOpacity>
               {editErrors.date ? <Text style={styles.errorText}>{editErrors.date}</Text> : null}
             </View>
           </ScrollView>
@@ -551,6 +562,42 @@ export default function OshiDetailScreen() {
             onKey={handleEditNumpad}
             onClose={() => setEditNumpadOpen(false)}
           />
+
+          {/* 日付選択モーダル */}
+          <Modal visible={dateModalOpen} transparent animationType="fade" onRequestClose={() => setDateModalOpen(false)}>
+            <View style={styles.dateModalBackdrop}>
+              <View style={styles.dateModalCard}>
+                <Text style={styles.dateModalTitle}>日付を選択</Text>
+                <DateTimePicker
+                  value={tempDate}
+                  mode="date"
+                  display="spinner"
+                  onChange={(_, selected) => { if (selected) setTempDate(selected) }}
+                  locale="ja-JP"
+                  maximumDate={new Date()}
+                />
+                <View style={styles.dateModalBtns}>
+                  <TouchableOpacity style={styles.dateModalCancel} onPress={() => setDateModalOpen(false)} activeOpacity={0.7}>
+                    <Text style={styles.dateModalCancelText}>キャンセル</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.dateModalConfirm}
+                    onPress={() => {
+                      const y = tempDate.getFullYear()
+                      const m = String(tempDate.getMonth() + 1).padStart(2, '0')
+                      const d = String(tempDate.getDate()).padStart(2, '0')
+                      setEditDate(`${y}-${m}-${d}`)
+                      setEditFieldError('date', null)
+                      setDateModalOpen(false)
+                    }}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.dateModalConfirmText}>確定</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
         </View>
       </Modal>
     </View>
@@ -647,8 +694,17 @@ const styles = StyleSheet.create({
   categoryChipTextActive: { color: Colors.white },
   input: { height: 44, borderRadius: 12, borderWidth: 2, borderColor: Colors.pinkSoft, backgroundColor: Colors.white, paddingHorizontal: 14, fontSize: 13, color: Colors.textDark },
   inputError: { borderColor: Colors.error },
-  dateDisplay: { height: 44, borderRadius: 12, borderWidth: 2, borderColor: Colors.pinkSoft, backgroundColor: Colors.white, paddingHorizontal: 14, justifyContent: 'center' },
+  dateDisplay: { height: 44, borderRadius: 12, borderWidth: 2, borderColor: Colors.pinkSoft, backgroundColor: Colors.white, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   dateBtnText: { fontSize: 13, fontFamily: Fonts.zenMaruBold, color: Colors.textDark },
+  dateChangeHint: { fontSize: 11, color: Colors.pinkVivid, fontFamily: Fonts.zenMaruRegular },
+  dateModalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  dateModalCard: { backgroundColor: Colors.white, borderRadius: 20, padding: 24, width: '100%', maxWidth: 340 },
+  dateModalTitle: { fontSize: 15, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, textAlign: 'center', marginBottom: 8 },
+  dateModalBtns: { flexDirection: 'row', gap: 10, marginTop: 8 },
+  dateModalCancel: { flex: 1, height: 44, borderRadius: 12, backgroundColor: Colors.pinkSoft, alignItems: 'center', justifyContent: 'center' },
+  dateModalCancelText: { fontSize: 14, fontFamily: Fonts.zenMaruBold, color: Colors.textMid },
+  dateModalConfirm: { flex: 1, height: 44, borderRadius: 12, backgroundColor: Colors.pinkVivid, alignItems: 'center', justifyContent: 'center' },
+  dateModalConfirmText: { fontSize: 14, fontFamily: Fonts.zenMaruBold, color: Colors.white },
   saveHeaderBtn: { height: 34, paddingHorizontal: 14, borderRadius: 99, backgroundColor: Colors.pinkVivid, alignItems: 'center', justifyContent: 'center' },
   saveHeaderBtnDisabled: { backgroundColor: Colors.pinkLight },
   saveHeaderBtnText: { fontSize: 12, fontFamily: Fonts.zenMaruBold, color: Colors.white },
