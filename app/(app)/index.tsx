@@ -150,18 +150,11 @@ export default function HomeScreen() {
         >
           <Text style={styles.bannerLabel}>{currentYear}年{currentMonth}月の推し活合計</Text>
           <Text style={styles.bannerAmount}>¥{formatAmount(monthTotal)}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Text style={styles.bannerDiff}>
-              {lastMonthDiff >= 0
-                ? `先月より ¥${formatAmount(lastMonthDiff)} 少ないよ`
-                : `先月より ¥${formatAmount(Math.abs(lastMonthDiff))} 多いよ`}
-            </Text>
-            <Ionicons
-              name={lastMonthDiff >= 0 ? 'sparkles' : 'cash-outline'}
-              size={13}
-              color="rgba(255,255,255,0.9)"
-            />
-          </View>
+          <Text style={styles.bannerDiff}>
+            {lastMonthDiff >= 0
+              ? `先月より ¥${formatAmount(lastMonthDiff)} 少ないよ`
+              : `先月より ¥${formatAmount(Math.abs(lastMonthDiff))} 多いよ`}
+          </Text>
         </LinearGradient>
 
         {/* 推しごとの今月 */}
