@@ -10,6 +10,9 @@ import {
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { router } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { supabase } from '@/lib/supabase'
 import { Colors, CATEGORIES } from '@/constants/colors'
 import { formatAmount, getLocalDateString, formatDate } from '@/lib/utils'
@@ -19,8 +22,20 @@ import AppHeader, { HeaderTextButton } from '@/components/AppHeader'
 import NumpadModal from '@/components/NumpadModal'
 import Toast from '@/components/Toast'
 import { useToast } from '@/components/useToast'
+import OshiIcon from '@/components/OshiIcon'
+import { Fonts } from '@/constants/fonts'
 
 type Category = 'goods' | 'ticket' | 'streaming' | 'photobook' | 'other'
+
+function CategoryIcon({ category, size = 14 }: { category: string; size?: number }) {
+  switch (category) {
+    case 'goods': return <MaterialCommunityIcons name="teddy-bear" size={size} color="#E8956D" />
+    case 'ticket': return <FontAwesome5 name="ticket-alt" size={size} color="#9B59B6" />
+    case 'streaming': return <Ionicons name="tv-outline" size={size} color="#5BB8FF" />
+    case 'photobook': return <Ionicons name="camera-outline" size={size} color="#FF8FB8" />
+    default: return <Ionicons name="sparkles" size={size} color="#F59E0B" />
+  }
+}
 
 export default function AddExpenseScreen() {
   const { toast, showToast } = useToast()
@@ -108,7 +123,7 @@ export default function AddExpenseScreen() {
         spent_at: date,
       })
       if (error) throw error
-      showToast('記録したよ🌸')
+      showToast('記録したよ')
       setTimeout(() => router.back(), 800)
     } catch (err) {
       console.error('[expense insert error]', err)
@@ -132,7 +147,7 @@ export default function AddExpenseScreen() {
         <View style={styles.emptyCenter}>
           <View style={styles.emptyCard}>
             <Text style={styles.emptyEmoji}>🌸</Text>
-            <Text style={styles.emptyText}>まだ推しが登録されていないよ🌸{'\n'}追加してみよう！</Text>
+            <Text style={styles.emptyText}>まだ推しが登録されていないよ{'\n'}追加してみよう！</Text>
             <TouchableOpacity
               style={styles.addOshiBtn}
               onPress={() => router.push('/oshi/new')}
@@ -200,7 +215,7 @@ export default function AddExpenseScreen() {
                         selected && { borderColor: Colors.pinkVivid, borderWidth: 3 },
                       ]}
                     >
-                      <Text style={{ fontSize: 20 }}>{oshi.icon_emoji}</Text>
+                      <OshiIcon emoji={oshi.icon_emoji || '🌸'} size={20} color={color} />
                     </View>
                     <Text style={[styles.oshiName, selected && styles.oshiNameSelected]}>
                       {oshi.name}
@@ -225,9 +240,12 @@ export default function AddExpenseScreen() {
                   onPress={() => setCategory(cat.value)}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.categoryChipText, active && styles.categoryChipTextActive]}>
-                    {cat.emoji} {cat.label}
-                  </Text>
+                  <View style={styles.categoryChipInner}>
+                    <CategoryIcon category={cat.value} size={12} />
+                    <Text style={[styles.categoryChipText, active && styles.categoryChipTextActive]}>
+                      {cat.label}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               )
             })}
@@ -312,7 +330,7 @@ export default function AddExpenseScreen() {
           {submitting ? (
             <ActivityIndicator color={Colors.white} />
           ) : (
-            <Text style={styles.submitBtnText}>記録する 🌸</Text>
+            <Text style={styles.submitBtnText}>記録する</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -344,7 +362,7 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textDark,
     marginBottom: 16,
   },
@@ -369,23 +387,25 @@ const styles = StyleSheet.create({
   },
   amountLabel: {
     fontSize: 10,
+    fontFamily: Fonts.zenMaruRegular,
     color: 'rgba(255,255,255,0.8)',
     letterSpacing: 1,
     marginBottom: 4,
   },
   amountValue: {
     fontSize: 36,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.white,
     letterSpacing: -0.5,
   },
   amountCurrency: {
     fontSize: 18,
-    fontWeight: '400',
+    fontFamily: Fonts.zenMaruRegular,
     opacity: 0.7,
   },
   amountHint: {
     fontSize: 10,
+    fontFamily: Fonts.zenMaruRegular,
     color: 'rgba(255,255,255,0.7)',
   },
   // セクション
@@ -400,7 +420,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 10,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textMid,
     letterSpacing: 1.5,
     marginBottom: 7,
@@ -427,7 +447,7 @@ const styles = StyleSheet.create({
   },
   oshiName: {
     fontSize: 9,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textMid,
   },
   oshiNameSelected: {
@@ -456,9 +476,14 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
+  categoryChipInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   categoryChipText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textMid,
   },
   categoryChipTextActive: {
@@ -486,6 +511,7 @@ const styles = StyleSheet.create({
   },
   charCount: {
     fontSize: 9,
+    fontFamily: Fonts.zenMaruRegular,
     color: Colors.textLight,
   },
   charCountError: {
@@ -509,11 +535,12 @@ const styles = StyleSheet.create({
   },
   dateBtnText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textDark,
   },
   dateBtnHint: {
     fontSize: 11,
+    fontFamily: Fonts.zenMaruRegular,
     color: Colors.textLight,
   },
   // 送信ボタン
@@ -538,7 +565,7 @@ const styles = StyleSheet.create({
   submitBtnText: {
     color: Colors.white,
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     letterSpacing: 0.5,
   },
   // 空状態
@@ -566,6 +593,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
+    fontFamily: Fonts.zenMaruRegular,
     color: Colors.textMid,
     textAlign: 'center',
     lineHeight: 22,
@@ -585,6 +613,6 @@ const styles = StyleSheet.create({
   addOshiBtnText: {
     color: Colors.white,
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
   },
 })

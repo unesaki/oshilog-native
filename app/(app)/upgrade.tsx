@@ -24,13 +24,16 @@ import {
   Alert,
 } from 'react-native'
 import { router } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
 import { Colors } from '@/constants/colors'
 import AppHeader, { HeaderTextButton } from '@/components/AppHeader'
+import { Fonts } from '@/constants/fonts'
 
 const FEATURES = [
-  { icon: '💝', label: '推しを無制限に登録', desc: '何人でも推しを管理できる' },
-  { icon: '📊', label: 'すべての統計機能', desc: 'より詳しい分析データを表示' },
-  { icon: '🌸', label: '広告なし', desc: '快適に使い続けられる' },
+  { icon: <Ionicons name="heart" size={22} color="#FF3D87" />, label: '推しを無制限に登録', desc: '何人でも推しを管理できる' },
+  { icon: <Ionicons name="bar-chart" size={22} color="#5BB8FF" />, label: 'すべての統計機能', desc: 'より詳しい分析データを表示' },
+  { icon: <Ionicons name="sparkles" size={22} color="#F59E0B" />, label: '広告なし', desc: '快適に使い続けられる' },
 ]
 
 export default function UpgradeScreen() {
@@ -50,7 +53,7 @@ export default function UpgradeScreen() {
       >
         {/* ヒーロー */}
         <View style={styles.hero}>
-          <Text style={styles.heroEmoji}>💎</Text>
+          <FontAwesome5 name="gem" size={56} color="#9B59B6" style={{ marginBottom: 12 }} />
           <Text style={styles.heroTitle}>プレミアムプラン</Text>
           <Text style={styles.heroSubtitle}>推し活をもっと楽しく、もっと自由に。</Text>
         </View>
@@ -62,9 +65,9 @@ export default function UpgradeScreen() {
             <Text style={styles.planPrice}>¥0</Text>
             <Text style={styles.planPeriod}>/ 月</Text>
             <View style={styles.planFeatures}>
-              <Text style={styles.planFeatureItem}>✓ 推し 3人まで</Text>
-              <Text style={styles.planFeatureItem}>✓ 支出記録</Text>
-              <Text style={styles.planFeatureItem}>✓ 予算管理</Text>
+              <Text style={styles.planFeatureItem}>推し 3人まで</Text>
+              <Text style={styles.planFeatureItem}>支出記録</Text>
+              <Text style={styles.planFeatureItem}>予算管理</Text>
             </View>
           </View>
           <View style={styles.planPremium}>
@@ -72,10 +75,10 @@ export default function UpgradeScreen() {
             <Text style={styles.planPricePremium}>¥480</Text>
             <Text style={styles.planPeriodPremium}>/ 月</Text>
             <View style={styles.planFeatures}>
-              <Text style={styles.planFeatureItemPremium}>✓ 推し 無制限</Text>
-              <Text style={styles.planFeatureItemPremium}>✓ 支出記録</Text>
-              <Text style={styles.planFeatureItemPremium}>✓ 予算管理</Text>
-              <Text style={styles.planFeatureItemPremium}>✓ 広告なし</Text>
+              <Text style={styles.planFeatureItemPremium}>推し 無制限</Text>
+              <Text style={styles.planFeatureItemPremium}>支出記録</Text>
+              <Text style={styles.planFeatureItemPremium}>予算管理</Text>
+              <Text style={styles.planFeatureItemPremium}>広告なし</Text>
             </View>
           </View>
         </View>
@@ -84,7 +87,7 @@ export default function UpgradeScreen() {
         <View style={styles.featureList}>
           {FEATURES.map((f) => (
             <View key={f.label} style={styles.featureItem}>
-              <Text style={styles.featureIcon}>{f.icon}</Text>
+              <View style={styles.featureIconWrap}>{f.icon}</View>
               <View style={styles.featureText}>
                 <Text style={styles.featureLabel}>{f.label}</Text>
                 <Text style={styles.featureDesc}>{f.desc}</Text>
@@ -114,8 +117,7 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 20, paddingBottom: 40 },
   // ヒーロー
   hero: { alignItems: 'center', paddingVertical: 24 },
-  heroEmoji: { fontSize: 56, marginBottom: 12 },
-  heroTitle: { fontSize: 24, fontWeight: '700', color: Colors.textDark, marginBottom: 8 },
+  heroTitle: { fontSize: 24, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, marginBottom: 8 },
   heroSubtitle: { fontSize: 14, color: Colors.textMid, textAlign: 'center' },
   // プラン比較
   planRow: { flexDirection: 'row', gap: 10, marginBottom: 24 },
@@ -130,21 +132,21 @@ const styles = StyleSheet.create({
     shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35, shadowRadius: 10, elevation: 6,
   },
-  planLabel: { fontSize: 11, color: Colors.textLight, marginBottom: 4, fontWeight: '600' },
-  planLabelPremium: { fontSize: 11, color: 'rgba(255,255,255,0.8)', marginBottom: 4, fontWeight: '600' },
-  planPrice: { fontSize: 28, fontWeight: '700', color: Colors.textDark },
-  planPricePremium: { fontSize: 28, fontWeight: '700', color: Colors.white },
+  planLabel: { fontSize: 11, color: Colors.textLight, marginBottom: 4, fontFamily: Fonts.zenMaruBold },
+  planLabelPremium: { fontSize: 11, color: 'rgba(255,255,255,0.8)', marginBottom: 4, fontFamily: Fonts.zenMaruBold },
+  planPrice: { fontSize: 28, fontFamily: Fonts.zenMaruBold, color: Colors.textDark },
+  planPricePremium: { fontSize: 28, fontFamily: Fonts.zenMaruBold, color: Colors.white },
   planPeriod: { fontSize: 11, color: Colors.textLight, marginBottom: 12 },
   planPeriodPremium: { fontSize: 11, color: 'rgba(255,255,255,0.7)', marginBottom: 12 },
   planFeatures: { gap: 6 },
-  planFeatureItem: { fontSize: 12, color: Colors.textMid, fontWeight: '500' },
-  planFeatureItemPremium: { fontSize: 12, color: Colors.white, fontWeight: '500' },
+  planFeatureItem: { fontSize: 12, color: Colors.textMid, fontFamily: Fonts.zenMaruRegular },
+  planFeatureItemPremium: { fontSize: 12, color: Colors.white, fontFamily: Fonts.zenMaruRegular },
   // 機能リスト
   featureList: { backgroundColor: Colors.white, borderRadius: 16, padding: 16, marginBottom: 24, gap: 16, shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 },
   featureItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  featureIcon: { fontSize: 24, width: 32, textAlign: 'center' },
+  featureIconWrap: { width: 32, alignItems: 'center' },
   featureText: { flex: 1 },
-  featureLabel: { fontSize: 14, fontWeight: '700', color: Colors.textDark, marginBottom: 2 },
+  featureLabel: { fontSize: 14, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, marginBottom: 2 },
   featureDesc: { fontSize: 12, color: Colors.textLight },
   // 購入ボタン
   purchaseBtn: {
@@ -153,7 +155,7 @@ const styles = StyleSheet.create({
     shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
   },
-  purchaseBtnText: { color: Colors.white, fontSize: 17, fontWeight: '700', marginBottom: 4 },
+  purchaseBtnText: { color: Colors.white, fontSize: 17, fontFamily: Fonts.zenMaruBold, marginBottom: 4 },
   purchaseBtnSub: { color: 'rgba(255,255,255,0.8)', fontSize: 12 },
   disclaimer: { fontSize: 10, color: Colors.textLight, textAlign: 'center', lineHeight: 16 },
 })

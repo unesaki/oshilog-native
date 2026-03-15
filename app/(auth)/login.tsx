@@ -13,58 +13,30 @@ import React, { useState } from 'react'
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
   Alert,
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
-import * as WebBrowser from 'expo-web-browser'
+import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '@/lib/supabase'
 import { Colors } from '@/constants/colors'
-import { makeRedirectUri } from 'expo-auth-session'
-
-WebBrowser.maybeCompleteAuthSession()
+import { Fonts } from '@/constants/fonts'
 
 export default function LoginScreen() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
 
-  async function handleGoogleLogin() {
+  async function handleLogin() {
     setLoading(true)
     try {
-      const redirectTo = makeRedirectUri({ scheme: 'oshilog', path: 'auth/callback' })
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo,
-          skipBrowserRedirect: true,
-        },
-      })
-
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
-      if (!data.url) throw new Error('No auth URL')
-
-      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo)
-
-      if (result.type === 'success') {
-        const url = result.url
-        // Supabaseはトークンをハッシュフラグメント(#)で返す
-        const hash = url.includes('#') ? url.split('#')[1] : url.split('?')[1]
-        const params = new URLSearchParams(hash)
-        const accessToken = params.get('access_token')
-        const refreshToken = params.get('refresh_token')
-
-        if (accessToken && refreshToken) {
-          await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          })
-        }
-      }
-    } catch (err) {
-      console.error('[Google login error]', err)
-      Alert.alert('ログインエラー', 'ログインに失敗しました。もう一度試してください。')
+    } catch (err: any) {
+      Alert.alert('ログインエラー', err.message ?? 'ログインに失敗しました。')
     } finally {
       setLoading(false)
     }
@@ -73,33 +45,42 @@ export default function LoginScreen() {
   return (
     <LinearGradient colors={['#FFF0F5', '#FFE4EF']} style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.emoji}>💖</Text>
+        <Ionicons name="heart" size={52} color={Colors.pinkVivid} style={styles.emoji} />
         <Text style={styles.title}>oshilog</Text>
         <Text style={styles.subtitle}>推し活の記録を、もっと楽しく。</Text>
 
+        <TextInput
+          style={styles.input}
+          placeholder="メールアドレス"
+          placeholderTextColor="#ccc"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="パスワード"
+          placeholderTextColor="#ccc"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+
         <TouchableOpacity
           style={styles.button}
-          onPress={handleGoogleLogin}
+          onPress={handleLogin}
           disabled={loading}
           activeOpacity={0.85}
         >
           {loading ? (
             <ActivityIndicator color={Colors.white} />
           ) : (
-            <>
-              <GoogleIcon />
-              <Text style={styles.buttonText}>Googleでログイン</Text>
-            </>
+            <Text style={styles.buttonText}>ログイン</Text>
           )}
         </TouchableOpacity>
       </View>
     </LinearGradient>
-  )
-}
-
-function GoogleIcon() {
-  return (
-    <Text style={{ fontSize: 16, marginRight: 8 }}>G</Text>
   )
 }
 
@@ -125,24 +106,34 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   emoji: {
-    fontSize: 52,
     marginBottom: 12,
   },
   title: {
+    fontFamily: Fonts.playfairBoldItalic,
     fontSize: 32,
-    fontWeight: '700',
     color: Colors.pinkVivid,
-    fontStyle: 'italic',
     marginBottom: 8,
     letterSpacing: -0.5,
   },
   subtitle: {
+    fontFamily: Fonts.zenMaruRegular,
     fontSize: 13,
     color: '#aaa',
-    marginBottom: 32,
+    marginBottom: 24,
+  },
+  input: {
+    fontFamily: Fonts.zenMaruRegular,
+    width: '100%',
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: Colors.pinkSoft,
+    paddingHorizontal: 14,
+    fontSize: 14,
+    color: Colors.textDark,
+    marginBottom: 12,
   },
   button: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.pinkVivid,
@@ -150,6 +141,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 14,
     width: '100%',
+    marginTop: 8,
     shadowColor: Colors.pinkVivid,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
@@ -157,8 +149,8 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   buttonText: {
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.white,
     fontSize: 15,
-    fontWeight: '700',
   },
 })

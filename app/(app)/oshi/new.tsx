@@ -8,8 +8,11 @@ import {
   ScrollView,
   ActivityIndicator,
   Modal,
+  useWindowDimensions,
 } from 'react-native'
 import { router } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
 import { supabase } from '@/lib/supabase'
 import { Colors, OSHI_EMOJIS, OSHI_COLORS } from '@/constants/colors'
 import { sanitizeText, validateOshiName, validateBudget } from '@/lib/validate'
@@ -17,9 +20,16 @@ import { formatYearMonth } from '@/lib/utils'
 import AppHeader, { HeaderTextButton } from '@/components/AppHeader'
 import Toast from '@/components/Toast'
 import { useToast } from '@/components/useToast'
+import OshiIcon from '@/components/OshiIcon'
+import { Fonts } from '@/constants/fonts'
 
 export default function OshiNewScreen() {
   const { toast, showToast } = useToast()
+  const { width: screenWidth } = useWindowDimensions()
+  // scrollContent padding: 16×2=32, emojiGrid gap: 6×5=30, 6 buttons per row
+  const emojiBtnSize = Math.floor((screenWidth - 32 - 30) / 6)
+  // colorGrid gap: 8×5=40, 6 buttons per row (approx)
+  const colorBtnSize = Math.floor((screenWidth - 32 - 40) / 6)
 
   const [userId, setUserId] = useState<string | null>(null)
   const [oshiCount, setOshiCount] = useState(0)
@@ -88,7 +98,7 @@ export default function OshiNewScreen() {
         })
       }
 
-      showToast('推しを登録したよ🌸')
+      showToast('推しを登録したよ')
       setTimeout(() => router.back(), 800)
     } catch (err) {
       console.error('[oshi insert error]', err)
@@ -115,15 +125,15 @@ export default function OshiNewScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.pageTitle}>推しを登録する 🌸</Text>
+        <Text style={styles.pageTitle}>推しを登録する</Text>
 
         {/* 絵文字選択 */}
         <View style={styles.section}>
           <View style={styles.emojiPreviewRow}>
             <View style={[styles.emojiPreview, { backgroundColor: `${selectedColor}22`, borderColor: `${selectedColor}66` }]}>
-              <Text style={{ fontSize: 28 }}>{selectedEmoji}</Text>
+              <OshiIcon emoji={selectedEmoji} size={26} color={selectedColor} />
             </View>
-            <Text style={styles.emojiHint}>絵文字を選んでね</Text>
+            <Text style={styles.emojiHint}>アイコンを選んでね</Text>
           </View>
           <View style={styles.emojiGrid}>
             {OSHI_EMOJIS.map((emoji) => {
@@ -131,11 +141,17 @@ export default function OshiNewScreen() {
               return (
                 <TouchableOpacity
                   key={emoji}
-                  style={[styles.emojiBtn, active && { borderColor: selectedColor, backgroundColor: `${selectedColor}18` }]}
+                  style={[
+                    styles.emojiBtn,
+                    { width: emojiBtnSize, height: emojiBtnSize },
+                    active && { borderColor: selectedColor, backgroundColor: `${selectedColor}18` },
+                  ]}
                   onPress={() => setSelectedEmoji(emoji)}
                   activeOpacity={0.7}
                 >
-                  <Text style={{ fontSize: 22 }}>{emoji}</Text>
+                  <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
+                    <OshiIcon emoji={emoji} size={22} color={active ? selectedColor : '#C49AB0'} />
+                  </View>
                 </TouchableOpacity>
               )
             })}
@@ -175,13 +191,19 @@ export default function OshiNewScreen() {
                   key={color}
                   style={[
                     styles.colorBtn,
-                    { backgroundColor: color },
+                    { backgroundColor: color, width: colorBtnSize, height: colorBtnSize },
                     active && { borderWidth: 3, borderColor: Colors.white },
                   ]}
                   onPress={() => setSelectedColor(color)}
                   activeOpacity={0.7}
                 >
-                  {active && <Text style={{ color: Colors.white, fontSize: 14, fontWeight: '700' }}>✓</Text>}
+                  {active && (
+                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={{ transform: [{ translateY: -1.5 }] }}>
+                        <Ionicons name="checkmark" size={18} color={Colors.white} />
+                      </View>
+                    </View>
+                  )}
                 </TouchableOpacity>
               )
             })}
@@ -219,7 +241,7 @@ export default function OshiNewScreen() {
           {submitting ? (
             <ActivityIndicator color={Colors.white} />
           ) : (
-            <Text style={styles.submitBtnText}>登録する 🌸</Text>
+            <Text style={styles.submitBtnText}>登録する</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -232,11 +254,11 @@ export default function OshiNewScreen() {
           onPress={() => setShowPremiumModal(false)}
         >
           <TouchableOpacity style={styles.premiumModal} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
-            <Text style={{ fontSize: 44, marginBottom: 12 }}>💎</Text>
+            <FontAwesome5 name="gem" size={44} color="#9B59B6" style={{ marginBottom: 12 }} />
             <Text style={styles.premiumTitle}>プレミアムプランへ{'\n'}アップグレードしよう！</Text>
             <Text style={styles.premiumDesc}>
-              無料プランでは推しは<Text style={{ color: Colors.pinkVivid, fontWeight: '700' }}>3人まで</Text>登録できます。{'\n'}
-              プレミアムプランなら<Text style={{ color: Colors.pinkVivid, fontWeight: '700' }}>無制限</Text>に登録できます！
+              無料プランでは推しは<Text style={{ color: Colors.pinkVivid, fontFamily: Fonts.zenMaruBold }}>3人まで</Text>登録できます。{'\n'}
+              プレミアムプランなら<Text style={{ color: Colors.pinkVivid, fontFamily: Fonts.zenMaruBold }}>無制限</Text>に登録できます！
             </Text>
             <View style={styles.planRow}>
               <View style={styles.planFree}>
@@ -244,7 +266,10 @@ export default function OshiNewScreen() {
                 <Text style={styles.planFreeValue}>推し 3人まで</Text>
               </View>
               <View style={styles.planPremium}>
-                <Text style={styles.planPremiumLabel}>💎 プレミアム</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+                  <FontAwesome5 name="gem" size={10} color="rgba(255,255,255,0.8)" />
+                  <Text style={styles.planPremiumLabel}>プレミアム</Text>
+                </View>
                 <Text style={styles.planPremiumValue}>推し 無制限</Text>
               </View>
             </View>
@@ -271,20 +296,19 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.cream },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, gap: 10 },
-  pageTitle: { fontSize: 17, fontWeight: '700', color: Colors.textDark, marginBottom: 4 },
+  pageTitle: { fontSize: 17, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, marginBottom: 4 },
   section: { gap: 0 },
-  sectionHint: { fontSize: 12, color: '#888', fontWeight: '600', marginBottom: 6 },
+  sectionHint: { fontSize: 12, color: '#888', fontFamily: Fonts.zenMaruBold, marginBottom: 6 },
   // 絵文字
   emojiPreviewRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
   emojiPreview: {
     width: 52, height: 52, borderRadius: 26,
     alignItems: 'center', justifyContent: 'center', borderWidth: 2,
   },
-  emojiHint: { fontSize: 12, color: '#aaa' },
+  emojiHint: { fontSize: 12, fontFamily: Fonts.zenMaruRegular, color: '#aaa' },
   emojiGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   emojiBtn: {
-    width: '14.5%', aspectRatio: 1, borderRadius: 10,
-    alignItems: 'center', justifyContent: 'center',
+    borderRadius: 10,
     backgroundColor: Colors.pinkSoft, borderWidth: 2, borderColor: 'transparent',
   },
   // 入力
@@ -295,13 +319,13 @@ const styles = StyleSheet.create({
   },
   inputError: { borderColor: Colors.error },
   inputMeta: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4, marginTop: 3 },
-  charCount: { fontSize: 10, color: Colors.textLight },
+  charCount: { fontSize: 10, fontFamily: Fonts.zenMaruRegular, color: Colors.textLight },
   charCountError: { color: Colors.error },
   errorText: { fontSize: 10, color: Colors.error, marginTop: 2 },
   // カラー
   colorGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   colorBtn: {
-    width: '14%', aspectRatio: 1, borderRadius: 99,
+    borderRadius: 99,
     alignItems: 'center', justifyContent: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15, shadowRadius: 2, elevation: 2,
@@ -317,7 +341,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.38, shadowRadius: 9, elevation: 6,
   },
   submitBtnDisabled: { backgroundColor: Colors.pinkLight, shadowOpacity: 0, elevation: 0 },
-  submitBtnText: { color: Colors.white, fontSize: 16, fontWeight: '700' },
+  submitBtnText: { color: Colors.white, fontSize: 16, fontFamily: Fonts.zenMaruBold },
   // モーダル
   modalBackdrop: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.50)',
@@ -327,20 +351,20 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white, borderRadius: 24, padding: 32,
     width: '100%', maxWidth: 340, alignItems: 'center',
   },
-  premiumTitle: { fontSize: 17, fontWeight: '700', color: Colors.textDark, textAlign: 'center', marginBottom: 10, lineHeight: 24 },
-  premiumDesc: { fontSize: 13, color: '#999', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  premiumTitle: { fontSize: 17, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, textAlign: 'center', marginBottom: 10, lineHeight: 24 },
+  premiumDesc: { fontSize: 13, fontFamily: Fonts.zenMaruRegular, color: '#999', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
   planRow: { flexDirection: 'row', gap: 8, marginBottom: 24, width: '100%' },
   planFree: {
     flex: 1, backgroundColor: Colors.cream, borderRadius: 12,
     padding: 12, borderWidth: 1.5, borderColor: Colors.pinkSoft, alignItems: 'center',
   },
-  planFreeLabel: { fontSize: 11, color: '#aaa', marginBottom: 4 },
-  planFreeValue: { fontSize: 13, fontWeight: '700', color: '#555' },
+  planFreeLabel: { fontSize: 11, fontFamily: Fonts.zenMaruRegular, color: '#aaa', marginBottom: 4 },
+  planFreeValue: { fontSize: 13, fontFamily: Fonts.zenMaruBold, color: '#555' },
   planPremium: {
     flex: 1, backgroundColor: Colors.pinkVivid, borderRadius: 12, padding: 12, alignItems: 'center',
   },
-  planPremiumLabel: { fontSize: 11, color: 'rgba(255,255,255,0.8)', marginBottom: 4 },
-  planPremiumValue: { fontSize: 13, fontWeight: '700', color: Colors.white },
+  planPremiumLabel: { fontSize: 11, fontFamily: Fonts.zenMaruRegular, color: 'rgba(255,255,255,0.8)' },
+  planPremiumValue: { fontSize: 13, fontFamily: Fonts.zenMaruBold, color: Colors.white },
   upgradeBtn: {
     height: 48, borderRadius: 12, backgroundColor: Colors.pinkVivid,
     paddingHorizontal: 24, alignItems: 'center', justifyContent: 'center',
@@ -348,6 +372,6 @@ const styles = StyleSheet.create({
     shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35, shadowRadius: 8, elevation: 5,
   },
-  upgradeBtnText: { color: Colors.white, fontSize: 15, fontWeight: '700' },
-  modalCancelText: { fontSize: 14, color: '#aaa', paddingVertical: 8 },
+  upgradeBtnText: { color: Colors.white, fontSize: 15, fontFamily: Fonts.zenMaruBold },
+  modalCancelText: { fontSize: 14, fontFamily: Fonts.zenMaruRegular, color: '#aaa', paddingVertical: 8 },
 })

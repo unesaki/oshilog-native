@@ -8,8 +8,10 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router, useFocusEffect } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '@/lib/supabase'
 import { Colors } from '@/constants/colors'
 import { formatAmount } from '@/lib/utils'
@@ -18,6 +20,8 @@ import AppHeader, { HeaderIconButton, HeaderTextButton } from '@/components/AppH
 import BottomTabBar from '@/components/BottomTabBar'
 import Toast from '@/components/Toast'
 import { useToast } from '@/components/useToast'
+import OshiIcon from '@/components/OshiIcon'
+import { Fonts } from '@/constants/fonts'
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets()
@@ -121,7 +125,7 @@ export default function HomeScreen() {
         right={
           <HeaderIconButton onPress={() => {}}>
             <View>
-              <Text style={{ fontSize: 16 }}>🔔</Text>
+              <Ionicons name="notifications-outline" size={18} color="#8A5070" />
               <View style={styles.notificationDot} />
             </View>
           </HeaderIconButton>
@@ -137,19 +141,28 @@ export default function HomeScreen() {
         }
       >
         {/* 月合計バナー */}
-        <View style={styles.banner}>
+        <LinearGradient
+          colors={['#FF3D87', '#FF8FB8', '#FFB6D0']}
+          locations={[0, 0.55, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.banner}
+        >
           <Text style={styles.bannerLabel}>{currentYear}年{currentMonth}月の推し活合計</Text>
           <Text style={styles.bannerAmount}>¥{formatAmount(monthTotal)}</Text>
           <Text style={styles.bannerDiff}>
             {lastMonthDiff >= 0
-              ? `先月より ¥${formatAmount(lastMonthDiff)} 少ないよ ✨`
-              : `先月より ¥${formatAmount(Math.abs(lastMonthDiff))} 多いよ 💸`}
+              ? `先月より ¥${formatAmount(lastMonthDiff)} 少ないよ `
+              : `先月より ¥${formatAmount(Math.abs(lastMonthDiff))} 多いよ `}
+            <Text style={{ fontFamily: undefined }}>{lastMonthDiff >= 0 ? '✨' : '💸'}</Text>
           </Text>
-          <Text style={styles.bannerDecor}>🌸</Text>
-        </View>
+        </LinearGradient>
 
         {/* 推しごとの今月 */}
-        <Text style={styles.sectionTitle}>💝 推しごとの今月</Text>
+        <View style={styles.sectionTitleRow}>
+          <Ionicons name="heart" size={12} color="#FF3D87" />
+          <Text style={styles.sectionTitle}>推しごとの今月</Text>
+        </View>
         <View style={styles.oshiSection}>
           {hasMoreOshis ? (
             <>
@@ -192,7 +205,10 @@ export default function HomeScreen() {
         </View>
 
         {/* 最近の記録 */}
-        <Text style={styles.sectionTitle}>🕐 最近の記録</Text>
+        <View style={styles.sectionTitleRow}>
+          <Ionicons name="time-outline" size={12} color="#8A5070" />
+          <Text style={styles.sectionTitle}>最近の記録</Text>
+        </View>
         <View style={styles.expenseSection}>
           {Array.from({ length: 3 }).map((_, i) => {
             const expense = recentExpenses[i]
@@ -235,7 +251,7 @@ export default function HomeScreen() {
               onPress={() => { setMenuOpen(false); router.push('/oshi/new') }}
               activeOpacity={0.7}
             >
-              <Text style={styles.menuItemIcon}>💝</Text>
+              <Ionicons name="heart" size={20} color="#FF3D87" />
               <Text style={styles.menuItemText}>推しを追加する</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -243,7 +259,7 @@ export default function HomeScreen() {
               onPress={() => { setMenuOpen(false); router.push('/upgrade') }}
               activeOpacity={0.7}
             >
-              <Text style={styles.menuItemIcon}>✨</Text>
+              <Ionicons name="sparkles" size={20} color="#F59E0B" />
               <Text style={styles.menuItemText}>プレミアムにアップグレード</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -251,7 +267,7 @@ export default function HomeScreen() {
               onPress={() => { setMenuOpen(false); handleLogout() }}
               activeOpacity={0.7}
             >
-              <Text style={styles.menuItemIcon}>🚪</Text>
+              <Ionicons name="exit-outline" size={20} color="#8A5070" />
               <Text style={[styles.menuItemText, { color: Colors.textMid }]}>ログアウト</Text>
             </TouchableOpacity>
           </View>
@@ -275,7 +291,7 @@ function OshiCard({ oshi, expenses, budgets }: { oshi: Oshi; expenses: Expense[]
       activeOpacity={0.7}
     >
       <View style={[styles.oshiAvatar, { backgroundColor: `${color}88` }]}>
-        <Text style={{ fontSize: 18 }}>{oshi.icon_emoji}</Text>
+        <OshiIcon emoji={oshi.icon_emoji || '🌸'} size={18} color={color} />
       </View>
       <View style={styles.oshiInfo}>
         <Text style={styles.oshiName} numberOfLines={1}>{oshi.name}</Text>
@@ -317,7 +333,6 @@ const styles = StyleSheet.create({
   // バナー
   banner: {
     borderRadius: 20,
-    backgroundColor: Colors.pinkVivid,
     padding: 22,
     marginBottom: 12,
     overflow: 'hidden',
@@ -325,6 +340,7 @@ const styles = StyleSheet.create({
   },
   bannerLabel: {
     fontSize: 10,
+    fontFamily: Fonts.zenMaruRegular,
     letterSpacing: 1,
     opacity: 0.85,
     color: Colors.white,
@@ -332,12 +348,13 @@ const styles = StyleSheet.create({
   },
   bannerAmount: {
     fontSize: 32,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.white,
     letterSpacing: -0.5,
   },
   bannerDiff: {
     fontSize: 10,
+    fontFamily: Fonts.zenMaruRegular,
     opacity: 0.75,
     color: Colors.white,
     marginTop: 4,
@@ -350,13 +367,18 @@ const styles = StyleSheet.create({
     opacity: 0.18,
   },
   // セクション
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.textMid,
-    letterSpacing: 1.5,
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     marginBottom: 8,
     marginTop: 4,
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontFamily: Fonts.zenMaruBold,
+    color: Colors.textMid,
+    letterSpacing: 1.5,
   },
   // 推しカード
   oshiSection: {
@@ -392,7 +414,7 @@ const styles = StyleSheet.create({
   },
   oshiName: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textDark,
     marginBottom: 5,
   },
@@ -414,12 +436,13 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize: 9,
+    fontFamily: Fonts.zenMaruRegular,
     color: Colors.textLight,
     flexShrink: 0,
   },
   oshiAmount: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textDark,
     flexShrink: 0,
     marginRight: 10,
@@ -429,7 +452,7 @@ const styles = StyleSheet.create({
     right: 12,
     fontSize: 18,
     color: Colors.textLight,
-    fontWeight: '300',
+    fontFamily: Fonts.zenMaruRegular,
   },
   moreOshiCard: {
     flexDirection: 'row',
@@ -442,13 +465,13 @@ const styles = StyleSheet.create({
   },
   moreOshiText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.pinkVivid,
   },
   moreOshiArrow: {
     fontSize: 14,
     color: Colors.pinkVivid,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
   },
   addOshiCard: {
     flexDirection: 'row',
@@ -473,7 +496,7 @@ const styles = StyleSheet.create({
   },
   addOshiText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textLight,
   },
   placeholderCard: {
@@ -512,16 +535,17 @@ const styles = StyleSheet.create({
   },
   expenseTitle: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textDark,
   },
   expenseMeta: {
     fontSize: 9,
+    fontFamily: Fonts.zenMaruRegular,
     color: Colors.textLight,
   },
   expenseAmount: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textDark,
     flexShrink: 0,
   },
@@ -589,7 +613,7 @@ const styles = StyleSheet.create({
   },
   menuSectionLabel: {
     fontSize: 10,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textLight,
     letterSpacing: 1.5,
     marginBottom: 12,
@@ -602,12 +626,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.pinkSoft,
   },
-  menuItemIcon: {
-    fontSize: 20,
-  },
   menuItemText: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: Fonts.zenMaruRegular,
     color: Colors.textDark,
   },
 })

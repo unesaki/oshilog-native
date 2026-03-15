@@ -2,7 +2,9 @@ import React from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router, usePathname } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { Colors } from '@/constants/colors'
+import { Fonts } from '@/constants/fonts'
 
 export default function BottomTabBar() {
   const insets = useSafeAreaInsets()
@@ -18,7 +20,7 @@ export default function BottomTabBar() {
         onPress={() => router.push('/')}
         activeOpacity={0.7}
       >
-        <Text style={styles.tabIcon}>🏠</Text>
+        <Ionicons name={isHome ? 'home' : 'home-outline'} size={22} color={isHome ? '#FF3D87' : '#C49AB0'} />
         <Text style={[styles.tabLabel, isHome && styles.tabLabelActive]}>ホーム</Text>
       </TouchableOpacity>
 
@@ -37,7 +39,7 @@ export default function BottomTabBar() {
         onPress={() => router.push('/oshi')}
         activeOpacity={0.7}
       >
-        <Text style={styles.tabIcon}>💝</Text>
+        <Ionicons name={isOshi ? 'heart' : 'heart-outline'} size={22} color={isOshi ? '#FF3D87' : '#C49AB0'} />
         <Text style={[styles.tabLabel, isOshi && styles.tabLabelActive]}>推し</Text>
       </TouchableOpacity>
     </View>
@@ -65,12 +67,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 3,
   },
-  tabIcon: {
-    fontSize: 20,
-  },
   tabLabel: {
     fontSize: 9,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textLight,
   },
   tabLabelActive: {
@@ -99,6 +98,6 @@ const styles = StyleSheet.create({
   addIcon: {
     fontSize: 24,
     color: Colors.white,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
   },
 })

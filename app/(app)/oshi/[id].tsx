@@ -11,6 +11,9 @@ import {
   RefreshControl,
 } from 'react-native'
 import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { supabase } from '@/lib/supabase'
 import { Colors, CATEGORIES } from '@/constants/colors'
 import { formatAmount, formatDate, lightenHex } from '@/lib/utils'
@@ -21,8 +24,20 @@ import BottomTabBar from '@/components/BottomTabBar'
 import NumpadModal from '@/components/NumpadModal'
 import Toast from '@/components/Toast'
 import { useToast } from '@/components/useToast'
+import OshiIcon from '@/components/OshiIcon'
+import { Fonts } from '@/constants/fonts'
 
 type Category = 'goods' | 'ticket' | 'streaming' | 'photobook' | 'other'
+
+function CategoryIcon({ category, size = 14 }: { category: string; size?: number }) {
+  switch (category) {
+    case 'goods': return <MaterialCommunityIcons name="teddy-bear" size={size} color="#E8956D" />
+    case 'ticket': return <FontAwesome5 name="ticket-alt" size={size} color="#9B59B6" />
+    case 'streaming': return <Ionicons name="tv-outline" size={size} color="#5BB8FF" />
+    case 'photobook': return <Ionicons name="camera-outline" size={size} color="#FF8FB8" />
+    default: return <Ionicons name="sparkles" size={size} color="#F59E0B" />
+  }
+}
 
 export default function OshiDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -136,7 +151,7 @@ export default function OshiDetailScreen() {
       } else if (budget) {
         await supabase.from('budgets').delete().eq('id', budget.id)
       }
-      showToast('保存したよ🌸')
+      showToast('保存したよ')
       setOshiEditOpen(false)
       fetchData()
     } catch {
@@ -218,7 +233,7 @@ export default function OshiDetailScreen() {
       }
       await supabase.from('expenses').update(updates).eq('id', editingExpense.id)
       setExpenses((prev) => prev.map((e) => e.id === editingExpense.id ? { ...e, ...updates } : e))
-      showToast('更新したよ🌸')
+      showToast('更新したよ')
       setEditingExpense(null)
     } catch {
       showToast('保存できなかったよ… もう一度試してね', true)
@@ -263,7 +278,9 @@ export default function OshiDetailScreen() {
       {/* ヒーローエリア */}
       <View style={[styles.hero, { backgroundColor: color }]}>
         <View style={styles.heroDecor} />
-        <Text style={{ fontSize: 35, marginBottom: 6 }}>{oshi.icon_emoji}</Text>
+        <View style={styles.heroIconWrap}>
+          <OshiIcon emoji={oshi.icon_emoji || '🌸'} size={28} color="rgba(255,255,255,0.9)" />
+        </View>
         <Text style={styles.heroName}>{oshi.name}</Text>
         <Text style={styles.heroPeriod}>{currentYear}年{currentMonth}月の合計</Text>
         <Text style={styles.heroAmount}>¥{formatAmount(monthTotal)}</Text>
@@ -276,7 +293,7 @@ export default function OshiDetailScreen() {
               予算 ¥{formatAmount(budgetAmount)} まで
               {remaining !== null && remaining >= 0
                 ? ` 残り ¥${formatAmount(remaining)}`
-                : ' オーバー 💸'}
+                : ' オーバー'}
             </Text>
           </>
         ) : (
@@ -292,14 +309,19 @@ export default function OshiDetailScreen() {
         }
       >
         {/* カテゴリ内訳 */}
-        <Text style={styles.sectionTitle}>📊 カテゴリ内訳</Text>
+        <View style={styles.sectionTitleRow}>
+          <Ionicons name="bar-chart-outline" size={12} color="#8A5070" />
+          <Text style={styles.sectionTitle}>カテゴリ内訳</Text>
+        </View>
         <View style={styles.card}>
           {categoryStats.filter((c) => c.amount > 0).length === 0 ? (
             <Text style={styles.emptyText}>まだ記録がないよ</Text>
           ) : (
             categoryStats.filter((c) => c.amount > 0).map((cat) => (
               <View key={cat.value} style={styles.catRow}>
-                <Text style={{ fontSize: 14, width: 18, textAlign: 'center' }}>{cat.emoji}</Text>
+                <View style={{ width: 18, alignItems: 'center' }}>
+                  <CategoryIcon category={cat.value} size={14} />
+                </View>
                 <Text style={styles.catLabel}>{cat.label}</Text>
                 <View style={styles.catProgressBg}>
                   <View style={[styles.catProgressBar, { width: `${(cat.amount / maxCatAmount) * 100}%`, backgroundColor: color }]} />
@@ -311,11 +333,14 @@ export default function OshiDetailScreen() {
         </View>
 
         {/* 支出履歴 */}
-        <Text style={[styles.sectionTitle, { marginTop: 12 }]}>📝 支出履歴</Text>
+        <View style={[styles.sectionTitleRow, { marginTop: 12 }]}>
+          <Ionicons name="document-text-outline" size={12} color="#8A5070" />
+          <Text style={styles.sectionTitle}>支出履歴</Text>
+        </View>
         {expenses.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={{ fontSize: 36, marginBottom: 10 }}>🌸</Text>
-            <Text style={styles.emptyCardText}>まだ記録がないよ🌸{'\n'}支出を記録してみよう！</Text>
+            <Text style={styles.emptyCardText}>まだ記録がないよ{'\n'}支出を記録してみよう！</Text>
           </View>
         ) : (
           expenses.map((expense) => {
@@ -331,7 +356,7 @@ export default function OshiDetailScreen() {
               >
                 <Text style={styles.expenseDate}>{dateStr}</Text>
                 <View style={styles.expenseCatIcon}>
-                  <Text style={{ fontSize: 13 }}>{cat?.emoji ?? '✨'}</Text>
+                  <CategoryIcon category={expense.category} size={13} />
                 </View>
                 <View style={styles.expenseInfo}>
                   <Text style={styles.expenseTitle} numberOfLines={1}>{expense.title}</Text>
@@ -356,7 +381,7 @@ export default function OshiDetailScreen() {
           <View style={styles.sheetHandle} />
           {deleteOshiConfirm ? (
             <View style={{ alignItems: 'center', paddingVertical: 8 }}>
-              <Text style={{ fontSize: 32, marginBottom: 8 }}>🗑️</Text>
+              <Ionicons name="trash-outline" size={36} color="#ef4444" style={{ marginBottom: 8 }} />
               <Text style={styles.deleteTitle}>{oshi.name} を削除する</Text>
               <Text style={styles.deleteMsg}>この推しの支出データもすべて削除されます。{'\n'}この操作は取り消せません。</Text>
               <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteOshi} activeOpacity={0.8}>
@@ -368,7 +393,12 @@ export default function OshiDetailScreen() {
             </View>
           ) : (
             <>
-              <Text style={styles.sheetTitle}>推しの設定</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+                <View style={styles.sheetTitleIcon}>
+                  <OshiIcon emoji={oshi.icon_emoji || '🌸'} size={16} color={Colors.pinkVivid} />
+                </View>
+                <Text style={styles.sheetTitle}>推しの設定</Text>
+              </View>
               <Text style={styles.fieldLabel}>推しの名前</Text>
               <TextInput
                 style={[styles.sheetInput, oshiNameError ? styles.sheetInputError : null]}
@@ -426,10 +456,10 @@ export default function OshiDetailScreen() {
                 ) : (
                   <>
                     <TouchableOpacity style={styles.editExpenseBtn} onPress={() => openEditExpense(target)} activeOpacity={0.85}>
-                      <Text style={styles.editExpenseBtnText}>✏️ 編集する</Text>
+                      <Text style={styles.editExpenseBtnText}>編集する</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.dangerBtn} onPress={() => setDeleteExpenseId(expenseMenuId)} activeOpacity={0.7}>
-                      <Text style={styles.dangerBtnText}>🗑️ 削除する</Text>
+                      <Text style={styles.dangerBtnText}>削除する</Text>
                     </TouchableOpacity>
                   </>
                 )}
@@ -473,7 +503,10 @@ export default function OshiDetailScreen() {
                   const active = editCategory === cat.value
                   return (
                     <TouchableOpacity key={cat.value} style={[styles.categoryChip, active && styles.categoryChipActive]} onPress={() => setEditCategory(cat.value)} activeOpacity={0.7}>
-                      <Text style={[styles.categoryChipText, active && styles.categoryChipTextActive]}>{cat.emoji} {cat.label}</Text>
+                      <View style={styles.categoryChipInner}>
+                        <CategoryIcon category={cat.value} size={12} />
+                        <Text style={[styles.categoryChipText, active && styles.categoryChipTextActive]}>{cat.label}</Text>
+                      </View>
                     </TouchableOpacity>
                   )
                 })}
@@ -527,7 +560,7 @@ export default function OshiDetailScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.cream },
   backBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.pinkSoft, alignItems: 'center', justifyContent: 'center' },
-  backBtnText: { fontSize: 14, fontWeight: '700', color: Colors.textMid },
+  backBtnText: { fontSize: 14, fontFamily: Fonts.zenMaruBold, color: Colors.textMid },
   // ヒーロー
   hero: {
     margin: 16, borderRadius: 22, padding: 20, position: 'relative', overflow: 'hidden',
@@ -536,83 +569,87 @@ const styles = StyleSheet.create({
     position: 'absolute', right: -16, top: -16,
     width: 100, height: 100, backgroundColor: 'rgba(255,255,255,0.10)', borderRadius: 50,
   },
-  heroName: { fontSize: 20, fontWeight: '700', color: Colors.white, marginBottom: 2 },
-  heroPeriod: { fontSize: 10, color: 'rgba(255,255,255,0.8)', letterSpacing: 0.5, marginBottom: 3 },
-  heroAmount: { fontSize: 29, fontWeight: '700', color: Colors.white, letterSpacing: -0.5, marginBottom: 8 },
+  heroIconWrap: { width: 52, height: 52, borderRadius: 26, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  heroName: { fontSize: 20, fontFamily: Fonts.zenMaruBold, color: Colors.white, marginBottom: 2 },
+  heroPeriod: { fontSize: 10, fontFamily: Fonts.zenMaruRegular, color: 'rgba(255,255,255,0.8)', letterSpacing: 0.5, marginBottom: 3 },
+  heroAmount: { fontSize: 29, fontFamily: Fonts.zenMaruBold, color: Colors.white, letterSpacing: -0.5, marginBottom: 8 },
   heroProgressBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 99, overflow: 'hidden', marginBottom: 4 },
   heroProgressBar: { height: '100%', borderRadius: 99, backgroundColor: Colors.white },
-  heroBudgetText: { fontSize: 10, color: 'rgba(255,255,255,0.78)' },
+  heroBudgetText: { fontSize: 10, fontFamily: Fonts.zenMaruRegular, color: 'rgba(255,255,255,0.78)' },
   // スクロール
   scroll: { flex: 1 },
-  sectionTitle: { fontSize: 11, fontWeight: '700', color: Colors.textMid, letterSpacing: 1.5, paddingHorizontal: 16, marginBottom: 8 },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 16, marginBottom: 8 },
+  sectionTitle: { fontSize: 11, fontFamily: Fonts.zenMaruBold, color: Colors.textMid, letterSpacing: 1.5 },
   card: { marginHorizontal: 16, marginBottom: 12, backgroundColor: Colors.white, borderRadius: 16, padding: 14, shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
   catRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  catLabel: { fontSize: 12, color: Colors.textMid, fontWeight: '700', flex: 1 },
+  catLabel: { fontSize: 12, color: Colors.textMid, fontFamily: Fonts.zenMaruBold, flex: 1 },
   catProgressBg: { width: 68, height: 4, backgroundColor: Colors.pinkSoft, borderRadius: 99, overflow: 'hidden', flexShrink: 0 },
   catProgressBar: { height: '100%', borderRadius: 99 },
-  catAmount: { fontSize: 12, fontWeight: '700', color: Colors.textDark, width: 52, textAlign: 'right', flexShrink: 0 },
-  emptyText: { fontSize: 12, color: Colors.textLight, textAlign: 'center', paddingVertical: 8 },
+  catAmount: { fontSize: 12, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, width: 52, textAlign: 'right', flexShrink: 0 },
+  emptyText: { fontSize: 12, fontFamily: Fonts.zenMaruRegular, color: Colors.textLight, textAlign: 'center', paddingVertical: 8 },
   emptyCard: { marginHorizontal: 16, marginBottom: 6, backgroundColor: Colors.white, borderRadius: 12, padding: 36, alignItems: 'center', shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
-  emptyCardText: { fontSize: 13, color: Colors.textLight, textAlign: 'center', lineHeight: 22 },
+  emptyCardText: { fontSize: 13, fontFamily: Fonts.zenMaruRegular, color: Colors.textLight, textAlign: 'center', lineHeight: 22 },
   // 支出行
   expenseRow: { marginHorizontal: 16, marginBottom: 6, backgroundColor: Colors.white, borderRadius: 12, padding: 11, flexDirection: 'row', alignItems: 'center', gap: 9, shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
-  expenseDate: { fontSize: 9, color: Colors.textLight, fontWeight: '700', width: 26, textAlign: 'center', flexShrink: 0 },
+  expenseDate: { fontSize: 9, color: Colors.textLight, fontFamily: Fonts.zenMaruBold, width: 26, textAlign: 'center', flexShrink: 0 },
   expenseCatIcon: { width: 28, height: 28, borderRadius: 8, backgroundColor: Colors.pinkSoft, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   expenseInfo: { flex: 1, minWidth: 0 },
-  expenseTitle: { fontSize: 12, fontWeight: '700', color: Colors.textDark },
-  expenseMemo: { fontSize: 9, color: Colors.textLight, marginTop: 1 },
-  expenseAmount: { fontSize: 13, fontWeight: '700', color: Colors.textDark, flexShrink: 0 },
-  expenseArrow: { fontSize: 16, color: Colors.textLight },
+  expenseTitle: { fontSize: 12, fontFamily: Fonts.zenMaruBold, color: Colors.textDark },
+  expenseMemo: { fontSize: 9, fontFamily: Fonts.zenMaruRegular, color: Colors.textLight, marginTop: 1 },
+  expenseAmount: { fontSize: 13, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, flexShrink: 0 },
+  expenseArrow: { fontSize: 16, fontFamily: Fonts.zenMaruRegular, color: Colors.textLight },
   // シート
   sheetBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(45,27,37,0.45)' },
   sheet: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: Colors.white, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 40, shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.14, shadowRadius: 16, elevation: 20 },
   sheetHandle: { width: 36, height: 4, borderRadius: 999, backgroundColor: Colors.pinkSoft, alignSelf: 'center', marginBottom: 20 },
-  sheetTitle: { fontSize: 16, fontWeight: '700', color: Colors.textDark, marginBottom: 20 },
-  fieldLabel: { fontSize: 10, fontWeight: '700', color: Colors.textMid, letterSpacing: 1, marginBottom: 6 },
-  sheetInput: { height: 44, borderRadius: 12, borderWidth: 2, borderColor: Colors.pinkSoft, backgroundColor: Colors.white, paddingHorizontal: 14, fontSize: 14, fontWeight: '700', color: Colors.textDark },
+  sheetTitle: { fontSize: 16, fontFamily: Fonts.zenMaruBold, color: Colors.textDark },
+  sheetTitleIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.pinkSoft, alignItems: 'center', justifyContent: 'center' },
+  fieldLabel: { fontSize: 10, fontFamily: Fonts.zenMaruBold, color: Colors.textMid, letterSpacing: 1, marginBottom: 6 },
+  sheetInput: { height: 44, borderRadius: 12, borderWidth: 2, borderColor: Colors.pinkSoft, backgroundColor: Colors.white, paddingHorizontal: 14, fontSize: 14, fontFamily: Fonts.zenMaruBold, color: Colors.textDark },
   sheetInputError: { borderColor: Colors.error },
   budgetInputWrap: { position: 'relative', flexDirection: 'row', alignItems: 'center' },
   yen: { position: 'absolute', left: 14, zIndex: 1, fontSize: 14, color: '#999' },
   saveBtn: { height: 48, borderRadius: 12, backgroundColor: Colors.pinkVivid, alignItems: 'center', justifyContent: 'center', marginTop: 24, marginBottom: 12, shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 5 },
   saveBtnDisabled: { backgroundColor: Colors.pinkLight, shadowOpacity: 0, elevation: 0 },
-  saveBtnText: { color: Colors.white, fontSize: 15, fontWeight: '700' },
+  saveBtnText: { color: Colors.white, fontSize: 15, fontFamily: Fonts.zenMaruBold },
   divider: { height: 1, backgroundColor: Colors.pinkSoft, marginVertical: 12 },
   dangerBtn: { height: 44, borderRadius: 12, borderWidth: 1.5, borderColor: Colors.error, alignItems: 'center', justifyContent: 'center' },
-  dangerBtnText: { color: Colors.error, fontSize: 14, fontWeight: '700' },
+  dangerBtnText: { color: Colors.error, fontSize: 14, fontFamily: Fonts.zenMaruBold },
   errorText: { fontSize: 10, color: Colors.error, marginTop: 2 },
-  deleteTitle: { fontSize: 16, fontWeight: '700', color: Colors.textDark, marginBottom: 6 },
-  deleteMsg: { fontSize: 12, color: Colors.textLight, lineHeight: 20, textAlign: 'center', marginBottom: 24 },
+  deleteTitle: { fontSize: 16, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, marginBottom: 6 },
+  deleteMsg: { fontSize: 12, fontFamily: Fonts.zenMaruRegular, color: Colors.textLight, lineHeight: 20, textAlign: 'center', marginBottom: 24 },
   deleteBtn: { width: '100%', height: 48, borderRadius: 12, backgroundColor: Colors.error, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
-  deleteBtnText: { color: Colors.white, fontSize: 15, fontWeight: '700' },
-  cancelText: { fontSize: 14, color: Colors.textLight, paddingVertical: 8 },
+  deleteBtnText: { color: Colors.white, fontSize: 15, fontFamily: Fonts.zenMaruBold },
+  cancelText: { fontSize: 14, fontFamily: Fonts.zenMaruRegular, color: Colors.textLight, paddingVertical: 8 },
   cancelBtn: { width: '100%', height: 44, borderRadius: 12, backgroundColor: Colors.pinkSoft, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
-  cancelBtnText: { fontSize: 14, fontWeight: '700', color: Colors.textMid },
-  expenseMenuTitle: { fontSize: 13, fontWeight: '700', color: Colors.textDark, textAlign: 'center', marginBottom: 16 },
+  cancelBtnText: { fontSize: 14, fontFamily: Fonts.zenMaruBold, color: Colors.textMid },
+  expenseMenuTitle: { fontSize: 13, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, textAlign: 'center', marginBottom: 16 },
   editExpenseBtn: { height: 52, borderRadius: 12, backgroundColor: Colors.pinkVivid, alignItems: 'center', justifyContent: 'center', marginBottom: 10, shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 },
-  editExpenseBtnText: { color: Colors.white, fontSize: 15, fontWeight: '700' },
+  editExpenseBtnText: { color: Colors.white, fontSize: 15, fontFamily: Fonts.zenMaruBold },
   // 支出編集オーバーレイ
   editOverlay: { flex: 1, backgroundColor: Colors.cream },
   editScroll: { flex: 1 },
   editScrollContent: { padding: 20, gap: 0 },
-  pageTitle: { fontSize: 16, fontWeight: '700', color: Colors.textDark, marginBottom: 16 },
+  pageTitle: { fontSize: 16, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, marginBottom: 16 },
   amountBtn: { borderRadius: 18, backgroundColor: Colors.pinkVivid, paddingHorizontal: 22, paddingVertical: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.28, shadowRadius: 10, elevation: 6 },
   amountBtnError: { backgroundColor: Colors.error },
-  amountLabel: { fontSize: 10, color: 'rgba(255,255,255,0.8)', letterSpacing: 1, marginBottom: 4 },
-  amountValue: { fontSize: 36, fontWeight: '700', color: Colors.white, letterSpacing: -0.5 },
-  amountCurrency: { fontSize: 18, fontWeight: '400', opacity: 0.7 },
-  amountHint: { fontSize: 10, color: 'rgba(255,255,255,0.7)' },
+  amountLabel: { fontSize: 10, fontFamily: Fonts.zenMaruRegular, color: 'rgba(255,255,255,0.8)', letterSpacing: 1, marginBottom: 4 },
+  amountValue: { fontSize: 36, fontFamily: Fonts.zenMaruBold, color: Colors.white, letterSpacing: -0.5 },
+  amountCurrency: { fontSize: 18, fontFamily: Fonts.zenMaruRegular, opacity: 0.7 },
+  amountHint: { fontSize: 10, fontFamily: Fonts.zenMaruRegular, color: 'rgba(255,255,255,0.7)' },
   editSection: { marginTop: 16 },
-  editSectionLabel: { fontSize: 10, fontWeight: '700', color: Colors.textMid, letterSpacing: 1.5, marginBottom: 7 },
+  editSectionLabel: { fontSize: 10, fontFamily: Fonts.zenMaruBold, color: Colors.textMid, letterSpacing: 1.5, marginBottom: 7 },
   categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   categoryChip: { paddingHorizontal: 13, paddingVertical: 7, borderRadius: 99, backgroundColor: Colors.white, borderWidth: 2, borderColor: Colors.pinkSoft },
   categoryChipActive: { backgroundColor: Colors.pinkVivid, borderColor: Colors.pinkVivid },
-  categoryChipText: { fontSize: 11, fontWeight: '700', color: Colors.textMid },
+  categoryChipInner: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  categoryChipText: { fontSize: 11, fontFamily: Fonts.zenMaruBold, color: Colors.textMid },
   categoryChipTextActive: { color: Colors.white },
   input: { height: 44, borderRadius: 12, borderWidth: 2, borderColor: Colors.pinkSoft, backgroundColor: Colors.white, paddingHorizontal: 14, fontSize: 13, color: Colors.textDark },
   inputError: { borderColor: Colors.error },
   dateDisplay: { height: 44, borderRadius: 12, borderWidth: 2, borderColor: Colors.pinkSoft, backgroundColor: Colors.white, paddingHorizontal: 14, justifyContent: 'center' },
-  dateBtnText: { fontSize: 13, fontWeight: '700', color: Colors.textDark },
+  dateBtnText: { fontSize: 13, fontFamily: Fonts.zenMaruBold, color: Colors.textDark },
   saveHeaderBtn: { height: 34, paddingHorizontal: 14, borderRadius: 99, backgroundColor: Colors.pinkVivid, alignItems: 'center', justifyContent: 'center' },
   saveHeaderBtnDisabled: { backgroundColor: Colors.pinkLight },
-  saveHeaderBtnText: { fontSize: 12, fontWeight: '700', color: Colors.white },
+  saveHeaderBtnText: { fontSize: 12, fontFamily: Fonts.zenMaruBold, color: Colors.white },
 })

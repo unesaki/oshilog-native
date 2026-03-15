@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { Animated, StyleSheet, Text } from 'react-native'
 import { Colors } from '@/constants/colors'
+import { Fonts } from '@/constants/fonts'
 
 type Props = {
   message: string
@@ -48,7 +49,6 @@ const styles = StyleSheet.create({
   text: {
     color: Colors.white,
     fontSize: 13,
-    fontWeight: '600',
-    whiteSpace: 'nowrap',
+    fontFamily: Fonts.zenMaruBold,
   },
 })

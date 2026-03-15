@@ -2,6 +2,7 @@ import React from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Colors } from '@/constants/colors'
+import { Fonts } from '@/constants/fonts'
 
 type Props = {
   left?: React.ReactNode
@@ -17,7 +18,7 @@ export default function AppHeader({ left, right, title }: Props) {
       <View style={styles.inner}>
         <View style={styles.side}>{left}</View>
         <Text style={styles.logo}>{title ?? 'oshilog'}</Text>
-        <View style={styles.side}>{right}</View>
+        <View style={[styles.side, styles.sideRight]}>{right}</View>
       </View>
     </View>
   )
@@ -73,15 +74,17 @@ const styles = StyleSheet.create({
     minHeight: 50,
   },
   logo: {
-    fontStyle: 'italic',
     fontSize: 20,
     color: Colors.pinkVivid,
     letterSpacing: -0.2,
-    fontWeight: '700',
+    fontFamily: Fonts.playfairBoldItalic,
   },
   side: {
     minWidth: 88,
     alignItems: 'flex-start',
+  },
+  sideRight: {
+    alignItems: 'flex-end',
   },
   iconBtn: {
     width: 34,
@@ -109,7 +112,7 @@ const styles = StyleSheet.create({
   },
   textBtnLabel: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: Fonts.zenMaruBold,
     color: Colors.textMid,
   },
   textBtnLabelPrimary: {
