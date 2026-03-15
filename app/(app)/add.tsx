@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Modal,
 } from 'react-native'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { router } from 'expo-router'
@@ -52,6 +53,7 @@ export default function AddExpenseScreen() {
   const [memo, setMemo] = useState('')
   const [date, setDate] = useState(getLocalDateString())
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [tempDate, setTempDate] = useState(getLocalDateString())
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -296,29 +298,13 @@ export default function AddExpenseScreen() {
           </View>
           <TouchableOpacity
             style={[styles.dateBtn, errors.date ? styles.inputError : null]}
-            onPress={() => setShowDatePicker(true)}
+            onPress={() => { setTempDate(date); setShowDatePicker(true) }}
             activeOpacity={0.7}
           >
             <Text style={styles.dateBtnText}>{formatDate(date)}</Text>
             <Text style={styles.dateBtnHint}>変更 ›</Text>
           </TouchableOpacity>
         </View>
-
-        {showDatePicker && (
-          <DateTimePicker
-            value={new Date(date)}
-            mode="date"
-            display="spinner"
-            onChange={(_, selected) => {
-              setShowDatePicker(false)
-              if (selected) {
-                const str = selected.toISOString().split('T')[0]
-                setDate(str)
-                setFieldError('date', validateDate(str) ?? '')
-              }
-            }}
-          />
-        )}
 
         {/* 記録ボタン */}
         <TouchableOpacity
@@ -334,6 +320,56 @@ export default function AddExpenseScreen() {
           )}
         </TouchableOpacity>
       </ScrollView>
+
+      {/* 日付選択モーダル */}
+      <Modal
+        visible={showDatePicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <TouchableOpacity
+          style={styles.dateModalBackdrop}
+          activeOpacity={1}
+          onPress={() => setShowDatePicker(false)}
+        >
+          <TouchableOpacity style={styles.dateModalCard} activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.dateModalTitle}>日付を選択</Text>
+            <DateTimePicker
+              value={new Date(tempDate)}
+              mode="date"
+              display="spinner"
+              onChange={(_, selected) => {
+                if (selected) {
+                  const str = selected.toISOString().split('T')[0]
+                  setTempDate(str)
+                }
+              }}
+              style={{ width: '100%' }}
+            />
+            <View style={styles.dateModalBtns}>
+              <TouchableOpacity
+                style={styles.dateModalCancel}
+                onPress={() => setShowDatePicker(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.dateModalCancelText}>キャンセル</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.dateModalConfirm}
+                onPress={() => {
+                  setDate(tempDate)
+                  setFieldError('date', validateDate(tempDate) ?? '')
+                  setShowDatePicker(false)
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.dateModalConfirmText}>確定</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
 
       <NumpadModal
         visible={numpadOpen}
@@ -567,6 +603,71 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: Fonts.zenMaruBold,
     letterSpacing: 0.5,
+  },
+  // 日付モーダル
+  dateModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  dateModalCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 24,
+    padding: 24,
+    width: '100%',
+    maxWidth: 360,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  dateModalTitle: {
+    fontSize: 15,
+    fontFamily: Fonts.zenMaruBold,
+    color: Colors.textDark,
+    marginBottom: 8,
+  },
+  dateModalBtns: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 16,
+    width: '100%',
+  },
+  dateModalCancel: {
+    flex: 1,
+    height: 46,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: Colors.pinkSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateModalCancelText: {
+    fontSize: 14,
+    fontFamily: Fonts.zenMaruRegular,
+    color: Colors.textMid,
+  },
+  dateModalConfirm: {
+    flex: 1,
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: Colors.pinkVivid,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: Colors.pinkVivid,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  dateModalConfirmText: {
+    fontSize: 14,
+    fontFamily: Fonts.zenMaruBold,
+    color: Colors.white,
   },
   // 空状態
   emptyCenter: {
