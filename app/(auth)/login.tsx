@@ -21,6 +21,7 @@ import {
 } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
+import { router } from 'expo-router'
 import { supabase } from '@/lib/supabase'
 import { Colors } from '@/constants/colors'
 import { Fonts } from '@/constants/fonts'
@@ -78,6 +79,11 @@ export default function LoginScreen() {
           ) : (
             <Text style={styles.buttonText}>ログイン</Text>
           )}
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => router.push('/(auth)/signup' as any)} style={styles.signupLink} activeOpacity={0.7}>
+          <Text style={styles.signupLinkText}>アカウントをお持ちでない方は</Text>
+          <Text style={styles.signupLinkBold}>新規登録</Text>
         </TouchableOpacity>
       </View>
     </LinearGradient>
@@ -153,4 +159,7 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 15,
   },
+  signupLink: { marginTop: 24, alignItems: 'center', gap: 2 },
+  signupLinkText: { fontSize: 12, color: '#aaa', fontFamily: Fonts.zenMaruRegular },
+  signupLinkBold: { fontSize: 13, color: Colors.pinkVivid, fontFamily: Fonts.zenMaruBold },
 })

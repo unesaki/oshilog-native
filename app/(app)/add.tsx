@@ -189,7 +189,7 @@ export default function AddExpenseScreen() {
         <AppHeader left={<HeaderTextButton onPress={() => router.back()} label="✕ キャンセル" />} />
         <View style={styles.emptyCenter}>
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyEmoji}>🌸</Text>
+            <Ionicons name="heart-outline" size={36} color={Colors.pinkLight} style={{ marginBottom: 10 }} />
             <Text style={styles.emptyText}>まだ推しが登録されていないよ{'\n'}追加してみよう！</Text>
             <TouchableOpacity
               style={styles.addOshiBtn}
