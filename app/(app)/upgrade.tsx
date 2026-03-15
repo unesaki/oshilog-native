@@ -25,7 +25,6 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
 import { Colors } from '@/constants/colors'
 import AppHeader, { HeaderTextButton } from '@/components/AppHeader'
 import { Fonts } from '@/constants/fonts'
@@ -53,7 +52,6 @@ export default function UpgradeScreen() {
       >
         {/* ヒーロー */}
         <View style={styles.hero}>
-          <FontAwesome5 name="gem" size={56} color="#9B59B6" style={{ marginBottom: 12 }} />
           <Text style={styles.heroTitle}>プレミアムプラン</Text>
           <Text style={styles.heroSubtitle}>推し活をもっと楽しく、もっと自由に。</Text>
         </View>
