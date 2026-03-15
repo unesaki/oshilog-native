@@ -102,7 +102,7 @@ export default function UpgradeScreen() {
 
         <Text style={styles.disclaimer}>
           購入はApp Store / Google Playを通じて行われます。{'\n'}
-          サブスクリプションは次の請求日の24時間前までにキャンセルしない限り自動更新されます。
+          サブスクリプションは次の請求日の24時間前までに{'\n'}キャンセルしない限り自動更新されます。
         </Text>
       </ScrollView>
     </View>
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 80 },
   // ヒーロー
-  hero: { alignItems: 'center', paddingVertical: 24 },
+  hero: { alignItems: 'center', paddingVertical: 12 },
   heroTitle: { fontSize: 24, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, marginBottom: 8 },
   heroSubtitle: { fontSize: 14, color: Colors.textMid, textAlign: 'center' },
   // プラン比較
