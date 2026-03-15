@@ -112,7 +112,7 @@ export default function UpgradeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.cream },
   scroll: { flex: 1 },
-  scrollContent: { padding: 20, paddingBottom: 40 },
+  scrollContent: { padding: 20, paddingBottom: 80 },
   // ヒーロー
   hero: { alignItems: 'center', paddingVertical: 24 },
   heroTitle: { fontSize: 24, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, marginBottom: 8 },
