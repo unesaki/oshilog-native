@@ -29,13 +29,22 @@ export default function NotificationsScreen() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const { data } = await supabase
-      .from('notifications')
-      .select('*')
-      .or(`user_id.eq.${user.id},user_id.is.null`)
-      .order('created_at', { ascending: false })
+    const [{ data: settingsData }, { data: notifData }] = await Promise.all([
+      supabase.from('user_notification_settings').select('*').eq('user_id', user.id).single(),
+      supabase.from('notifications').select('*').or(`user_id.eq.${user.id},user_id.is.null`).order('created_at', { ascending: false }),
+    ])
 
-    if (data) setNotifications(data as AppNotification[])
+    let filtered = (notifData ?? []) as AppNotification[]
+
+    if (settingsData) {
+      filtered = filtered.filter((n) => {
+        if (n.type === 'budget_alert') return settingsData.budget_alert
+        if (n.type === 'announcement') return settingsData.announcement
+        return true
+      })
+    }
+
+    setNotifications(filtered)
   }, [])
 
   useEffect(() => {

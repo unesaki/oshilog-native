@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, Switch, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, Switch, StyleSheet, ActivityIndicator, TouchableOpacity, Linking } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import * as Notifications from 'expo-notifications'
 import { supabase } from '@/lib/supabase'
 import { getOrCreateNotificationSettings } from '@/lib/notificationService'
 import { Colors } from '@/constants/colors'
@@ -13,10 +14,15 @@ export default function NotificationSettingsScreen() {
   const [announcement, setAnnouncement] = useState(true)
   const [loading, setLoading] = useState(true)
   const [settingsId, setSettingsId] = useState<string | null>(null)
+  const [osPermission, setOsPermission] = useState<'granted' | 'denied' | 'undetermined'>('undetermined')
 
   useEffect(() => {
     const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const [{ data: { user } }, { status }] = await Promise.all([
+        supabase.auth.getUser(),
+        Notifications.getPermissionsAsync(),
+      ])
+      setOsPermission(status as 'granted' | 'denied' | 'undetermined')
       if (!user) return
       const settings = await getOrCreateNotificationSettings(user.id)
       if (settings) {
@@ -67,6 +73,17 @@ export default function NotificationSettingsScreen() {
       />
 
       <View style={styles.section}>
+        {osPermission === 'denied' && (
+          <TouchableOpacity style={styles.permissionBanner} onPress={() => Linking.openSettings()} activeOpacity={0.8}>
+            <Ionicons name="alert-circle-outline" size={18} color="#F59E0B" />
+            <View style={styles.permissionBannerText}>
+              <Text style={styles.permissionBannerTitle}>デバイスの通知がOFFです</Text>
+              <Text style={styles.permissionBannerDesc}>タップしてシステム設定から通知を許可してください</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#F59E0B" />
+          </TouchableOpacity>
+        )}
+
         <Text style={styles.sectionLabel}>通知の種類</Text>
 
         <View style={styles.card}>
@@ -105,9 +122,6 @@ export default function NotificationSettingsScreen() {
           </View>
         </View>
 
-        <Text style={styles.note}>
-          ※ デバイスの通知設定もONにしてください
-        </Text>
       </View>
     </View>
   )
@@ -134,5 +148,12 @@ const styles = StyleSheet.create({
   rowTitle: { fontSize: 14, fontFamily: Fonts.zenMaruBold, color: Colors.textDark },
   rowDesc: { fontSize: 12, color: Colors.textLight, marginTop: 2 },
   divider: { height: 1, backgroundColor: Colors.pinkSoft, marginHorizontal: 16 },
-  note: { fontSize: 11, color: Colors.textLight, marginTop: 12, marginLeft: 4, lineHeight: 16 },
+  permissionBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#FEF3C7', borderRadius: 12, padding: 14, marginBottom: 16,
+    borderWidth: 1, borderColor: '#FCD34D',
+  },
+  permissionBannerText: { flex: 1 },
+  permissionBannerTitle: { fontSize: 13, fontFamily: Fonts.zenMaruBold, color: '#92400E' },
+  permissionBannerDesc: { fontSize: 11, color: '#B45309', marginTop: 2 },
 })
