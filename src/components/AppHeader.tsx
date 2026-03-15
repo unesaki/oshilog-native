@@ -53,7 +53,7 @@ export function HeaderTextButton({
       style={[styles.textBtn, variant === 'primary' && styles.textBtnPrimary]}
       activeOpacity={0.7}
     >
-      <Text style={[styles.textBtnLabel, variant === 'primary' && styles.textBtnLabelPrimary]}>
+      <Text style={[styles.textBtnLabel, variant === 'primary' && styles.textBtnLabelPrimary, variant === 'cancel' && styles.textBtnLabelCancel]}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -117,5 +117,8 @@ const styles = StyleSheet.create({
   },
   textBtnLabelPrimary: {
     color: Colors.white,
+  },
+  textBtnLabelCancel: {
+    color: '#EF4444',
   },
 })

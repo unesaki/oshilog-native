@@ -30,6 +30,31 @@ export type Budget = {
   created_at: string
 }
 
+export type AppNotification = {
+  id: string
+  user_id: string | null
+  type: 'budget_alert' | 'announcement'
+  title: string
+  body: string
+  is_read: boolean
+  created_at: string
+}
+
+export type NotificationSettings = {
+  id: string
+  user_id: string
+  budget_alert: boolean
+  announcement: boolean
+  created_at: string
+}
+
+export type PushToken = {
+  id: string
+  user_id: string
+  token: string
+  created_at: string
+}
+
 export type Subscription = {
   id: string
   user_id: string

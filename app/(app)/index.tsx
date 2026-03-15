@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router, useFocusEffect } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '@/lib/supabase'
+import { getUnreadCount } from '@/lib/notificationService'
 import { Colors } from '@/constants/colors'
 import { formatAmount } from '@/lib/utils'
 import type { Oshi, Expense, Budget } from '@/types'
@@ -37,6 +38,7 @@ export default function HomeScreen() {
   const [lastMonthDiff, setLastMonthDiff] = useState(0)
   const [currentYear, setCurrentYear] = useState(0)
   const [currentMonth, setCurrentMonth] = useState(0)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   async function fetchData() {
     const { data: { user } } = await supabase.auth.getUser()
@@ -78,6 +80,9 @@ export default function HomeScreen() {
     setBudgets(budgetsData ?? [])
     setMonthTotal(mTotal)
     setLastMonthDiff(lTotal - mTotal)
+
+    const count = await getUnreadCount(user.id)
+    setUnreadCount(count)
   }
 
   useFocusEffect(
@@ -123,10 +128,16 @@ export default function HomeScreen() {
           </HeaderIconButton>
         }
         right={
-          <HeaderIconButton onPress={() => {}}>
+          <HeaderIconButton onPress={() => router.push('/(app)/notifications')}>
             <View>
               <Ionicons name="notifications-outline" size={18} color="#8A5070" />
-              <View style={styles.notificationDot} />
+              {unreadCount > 0 && (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadCount > 99 ? '99+' : String(unreadCount)}
+                  </Text>
+                </View>
+              )}
             </View>
           </HeaderIconButton>
         }
@@ -565,16 +576,25 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.textMid,
     borderRadius: 2,
   },
-  notificationDot: {
+  notificationBadge: {
     position: 'absolute',
-    top: -1,
-    right: -1,
-    width: 9,
-    height: 9,
+    top: -4,
+    right: -6,
+    minWidth: 16,
+    height: 16,
     backgroundColor: Colors.pinkVivid,
-    borderRadius: 4.5,
-    borderWidth: 2,
+    borderRadius: 8,
+    borderWidth: 1.5,
     borderColor: Colors.cream,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  notificationBadgeText: {
+    color: Colors.white,
+    fontSize: 9,
+    fontFamily: Fonts.zenMaruBold,
+    lineHeight: 12,
   },
   menuBackdrop: {
     position: 'absolute',
