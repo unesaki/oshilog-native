@@ -339,7 +339,7 @@ export default function OshiDetailScreen() {
         </View>
         {expenses.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={{ fontSize: 36, marginBottom: 10 }}>🌸</Text>
+            <Ionicons name="heart" size={36} color={Colors.pinkLight} style={{ marginBottom: 10 }} />
             <Text style={styles.emptyCardText}>まだ記録がないよ{'\n'}支出を記録してみよう！</Text>
           </View>
         ) : (
