@@ -6,6 +6,8 @@ export default function AppLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="add" options={{ presentation: 'fullScreenModal' }} />
       <Stack.Screen name="upgrade" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="notifications" />
+      <Stack.Screen name="notification-settings" />
       <Stack.Screen name="oshi/index" />
       <Stack.Screen name="oshi/new" options={{ presentation: 'fullScreenModal' }} />
       <Stack.Screen name="oshi/[id]" />

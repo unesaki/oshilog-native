@@ -8,6 +8,7 @@ import { useFonts, PlayfairDisplay_700Bold_Italic } from '@expo-google-fonts/pla
 import { ZenMaruGothic_400Regular, ZenMaruGothic_700Bold } from '@expo-google-fonts/zen-maru-gothic'
 import { Ionicons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons'
 import { supabase } from '@/lib/supabase'
+import { registerPushToken } from '@/lib/notificationService'
 import type { Session } from '@supabase/supabase-js'
 import { useRouter, useSegments } from 'expo-router'
 
@@ -36,6 +37,9 @@ export default function RootLayout() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      if (session?.user) {
+        registerPushToken(session.user.id).catch(() => {})
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -49,7 +53,7 @@ export default function RootLayout() {
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/login')
     } else if (session && inAuthGroup) {
-      router.replace('/(app)/')
+      router.replace('/(app)')
     }
 
     SplashScreen.hideAsync()

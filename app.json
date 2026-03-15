@@ -35,6 +35,14 @@
       "expo-router",
       "expo-font",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#FF3D87",
+          "sounds": []
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "ios": {

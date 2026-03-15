@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons'
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5'
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons'
 import { supabase } from '@/lib/supabase'
+import { triggerBudgetAlert } from '@/lib/notificationService'
 import { Colors, CATEGORIES } from '@/constants/colors'
 import { formatAmount, getLocalDateString, formatDate } from '@/lib/utils'
 import { sanitizeText, validateAmount, validateExpenseTitle, validateMemo, validateDate } from '@/lib/validate'
@@ -97,6 +98,42 @@ export default function AddExpenseScreen() {
     }
   }
 
+  async function checkBudgetAlert(uid: string, oshiId: string, newAmount: number) {
+    const now = new Date()
+    const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const monthStart = `${yearMonth}-01`
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+
+    const [{ data: budgetData }, { data: expenseData }] = await Promise.all([
+      supabase.from('budgets').select('amount').eq('user_id', uid).eq('oshi_id', oshiId).eq('year_month', yearMonth).single(),
+      supabase.from('expenses').select('amount').eq('user_id', uid).eq('oshi_id', oshiId).gte('spent_at', monthStart).lte('spent_at', monthEnd),
+    ])
+
+    if (!budgetData) return
+
+    const totalSpent = (expenseData ?? []).reduce((s: number, e: { amount: number }) => s + e.amount, 0) + newAmount
+    const remaining = budgetData.amount - totalSpent
+    const remainPercent = remaining / budgetData.amount
+
+    if (remainPercent <= 0.2 && remaining >= 0) {
+      const oshi = oshis.find((o) => o.id === oshiId)
+      if (!oshi) return
+
+      // 今月すでに通知を送っていないか確認
+      const { data: existing } = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('user_id', uid)
+        .eq('type', 'budget_alert')
+        .gte('created_at', `${yearMonth}-01`)
+        .maybeSingle()
+
+      if (!existing) {
+        await triggerBudgetAlert(uid, oshi.name, Math.max(remaining, 0), budgetData.amount)
+      }
+    }
+  }
+
   async function handleSubmit() {
     const amountErr = validateAmount(amount)
     const titleErr = validateExpenseTitle(title)
@@ -125,6 +162,10 @@ export default function AddExpenseScreen() {
         spent_at: date,
       })
       if (error) throw error
+
+      // 予算アラートチェック（20%以下になった場合に通知）
+      if (userId && selectedOshiId) checkBudgetAlert(userId, selectedOshiId, amount).catch(() => {})
+
       showToast('記録したよ')
       setTimeout(() => router.back(), 800)
     } catch (err) {
