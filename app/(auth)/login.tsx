@@ -81,6 +81,10 @@ export default function LoginScreen() {
           )}
         </TouchableOpacity>
 
+        <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password' as any)} style={styles.forgotLink} activeOpacity={0.7}>
+          <Text style={styles.forgotLinkText}>パスワードをお忘れの方</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity onPress={() => router.push('/(auth)/signup' as any)} style={styles.signupLink} activeOpacity={0.7}>
           <Text style={styles.signupLinkText}>アカウントをお持ちでない方は</Text>
           <Text style={styles.signupLinkBold}>新規登録</Text>
@@ -159,7 +163,9 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 15,
   },
-  signupLink: { marginTop: 24, alignItems: 'center', gap: 2 },
+  forgotLink: { marginTop: 16 },
+  forgotLinkText: { fontSize: 12, color: Colors.textLight, fontFamily: Fonts.zenMaruRegular },
+  signupLink: { marginTop: 16, alignItems: 'center', gap: 2 },
   signupLinkText: { fontSize: 12, color: '#aaa', fontFamily: Fonts.zenMaruRegular },
   signupLinkBold: { fontSize: 13, color: Colors.pinkVivid, fontFamily: Fonts.zenMaruBold },
 })
