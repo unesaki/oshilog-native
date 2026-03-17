@@ -1,14 +1,3 @@
-/**
- * TODO: Google OAuth設定
- *
- * Supabase DashboardでGoogle OAuth Providerを有効化し、
- * app.jsonのscheme（"oshilog"）をリダイレクトURLに設定してください：
- *   oshilog://auth/callback
- *
- * また、iOS/AndroidのOAuth設定（GoogleSignIn）が必要です。
- * 詳細: https://supabase.com/docs/guides/auth/social-login/auth-google?platform=react-native
- */
-
 import React, { useState } from 'react'
 import {
   View,
@@ -22,6 +11,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
+import * as Linking from 'expo-linking'
 import { supabase } from '@/lib/supabase'
 import { Colors } from '@/constants/colors'
 import { Fonts } from '@/constants/fonts'
@@ -30,6 +21,7 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
 
   async function handleLogin() {
     setLoading(true)
@@ -40,6 +32,28 @@ export default function LoginScreen() {
       Alert.alert('ログインエラー', err.message ?? 'ログインに失敗しました。')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleGoogleLogin() {
+    setGoogleLoading(true)
+    try {
+      const redirectUrl = Linking.createURL('auth/callback')
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: redirectUrl, skipBrowserRedirect: true },
+      })
+      if (error || !data.url) throw error ?? new Error('URLの取得に失敗しました。')
+
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl)
+      if (result.type === 'success') {
+        const { error: sessionError } = await supabase.auth.exchangeCodeForSession(result.url)
+        if (sessionError) throw sessionError
+      }
+    } catch (err: any) {
+      Alert.alert('Googleログインエラー', err.message ?? 'ログインに失敗しました。')
+    } finally {
+      setGoogleLoading(false)
     }
   }
 
@@ -78,6 +92,28 @@ export default function LoginScreen() {
             <ActivityIndicator color={Colors.white} />
           ) : (
             <Text style={styles.buttonText}>ログイン</Text>
+          )}
+        </TouchableOpacity>
+
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>または</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <TouchableOpacity
+          style={styles.googleButton}
+          onPress={handleGoogleLogin}
+          disabled={googleLoading}
+          activeOpacity={0.85}
+        >
+          {googleLoading ? (
+            <ActivityIndicator color={Colors.pinkVivid} />
+          ) : (
+            <>
+              <Ionicons name="logo-google" size={18} color="#4285F4" style={styles.googleIcon} />
+              <Text style={styles.googleButtonText}>Googleでログイン</Text>
+            </>
           )}
         </TouchableOpacity>
 
@@ -161,6 +197,43 @@ const styles = StyleSheet.create({
   buttonText: {
     fontFamily: Fonts.zenMaruBold,
     color: Colors.white,
+    fontSize: 15,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginVertical: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Colors.pinkSoft,
+  },
+  dividerText: {
+    fontFamily: Fonts.zenMaruRegular,
+    fontSize: 12,
+    color: '#aaa',
+    marginHorizontal: 8,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: 999,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    width: '100%',
+    borderWidth: 1.5,
+    borderColor: Colors.pinkSoft,
+  },
+  googleIcon: {
+    marginRight: 8,
+  },
+  googleButtonText: {
+    fontFamily: Fonts.zenMaruBold,
+    color: Colors.textDark,
     fontSize: 15,
   },
   forgotLink: { marginTop: 16 },
