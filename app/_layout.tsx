@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { useFonts, PlayfairDisplay_700Bold_Italic } from '@expo-google-fonts/playfair-display'
 import { ZenMaruGothic_400Regular, ZenMaruGothic_700Bold } from '@expo-google-fonts/zen-maru-gothic'
 import { Ionicons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons'
+import * as Linking from 'expo-linking'
 import { supabase } from '@/lib/supabase'
 import { registerPushToken } from '@/lib/notificationService'
 import type { Session } from '@supabase/supabase-js'
@@ -35,14 +36,35 @@ export default function RootLayout() {
       setIsReady(true)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
+      if (event === 'PASSWORD_RECOVERY') {
+        router.replace('/(auth)/reset-password')
+        return
+      }
       if (session?.user) {
         registerPushToken(session.user.id).catch(() => {})
       }
     })
 
     return () => subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    async function handleDeepLink(url: string) {
+      const parsed = Linking.parse(url)
+      const code = parsed.queryParams?.code
+      if (typeof code === 'string') {
+        await supabase.auth.exchangeCodeForSession(code)
+      }
+    }
+
+    Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLink(url)
+    })
+
+    const sub = Linking.addEventListener('url', ({ url }) => handleDeepLink(url))
+    return () => sub.remove()
   }, [])
 
   useEffect(() => {
