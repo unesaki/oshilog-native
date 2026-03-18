@@ -15,6 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.unetech.oshilog",
+      "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "プロフィール画像の撮影に使用します"
       }
@@ -24,7 +25,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFF8F9"
       },
-      "package": "com.unetech.oshilog"
+      "package": "com.unetech.oshilog",
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro",
