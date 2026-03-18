@@ -11,38 +11,53 @@ import {
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import * as Linking from 'expo-linking'
 import { supabase } from '@/lib/supabase'
 import { Colors } from '@/constants/colors'
 import { Fonts } from '@/constants/fonts'
 
-export default function ForgotPasswordScreen() {
-  const [email, setEmail] = useState('')
+export default function ResetPasswordScreen() {
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [confirmError, setConfirmError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [emailError, setEmailError] = useState<string | null>(null)
 
   function validate() {
-    if (!email) return 'メールアドレスを入力してください'
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return 'メールアドレスの形式が正しくありません'
-    return null
+    let valid = true
+    if (!password) {
+      setPasswordError('パスワードを入力してください')
+      valid = false
+    } else if (password.length < 8) {
+      setPasswordError('パスワードは8文字以上で入力してください')
+      valid = false
+    } else {
+      setPasswordError(null)
+    }
+    if (!confirmPassword) {
+      setConfirmError('確認用パスワードを入力してください')
+      valid = false
+    } else if (password !== confirmPassword) {
+      setConfirmError('パスワードが一致しません')
+      valid = false
+    } else {
+      setConfirmError(null)
+    }
+    return valid
   }
 
   async function handleSubmit() {
-    const err = validate()
-    if (err) { setEmailError(err); return }
-    setEmailError(null)
+    if (!validate()) return
     setLoading(true)
     try {
-      const redirectTo = Linking.createURL('auth/callback')
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+      const { error } = await supabase.auth.updateUser({ password })
       if (error) throw error
       Alert.alert(
-        'メールを送信しました',
-        `${email} にパスワードリセット用のメールを送りました。\nメール内のリンクからパスワードを変更してください。`,
+        'パスワードを変更しました',
+        '新しいパスワードでログインしてください。',
         [{ text: 'ログイン画面へ', onPress: () => router.replace('/(auth)/login') }]
       )
     } catch (err: any) {
-      Alert.alert('エラー', err.message ?? '送信に失敗しました。もう一度お試しください。')
+      Alert.alert('エラー', err.message ?? 'パスワードの変更に失敗しました。')
     } finally {
       setLoading(false)
     }
@@ -51,22 +66,34 @@ export default function ForgotPasswordScreen() {
   return (
     <LinearGradient colors={['#FFF0F5', '#FFE4EF']} style={styles.container}>
       <View style={styles.card}>
-        <Ionicons name="lock-open-outline" size={48} color={Colors.pinkVivid} style={styles.icon} />
-        <Text style={styles.title}>パスワードリセット</Text>
-        <Text style={styles.subtitle}>登録済みのメールアドレスを入力してください。{'\n'}パスワード再設定用のメールをお送りします。</Text>
+        <Ionicons name="lock-closed-outline" size={48} color={Colors.pinkVivid} style={styles.icon} />
+        <Text style={styles.title}>パスワード再設定</Text>
+        <Text style={styles.subtitle}>新しいパスワードを入力してください。{'\n'}8文字以上で設定してください。</Text>
 
         <View style={styles.fieldWrap}>
           <TextInput
-            style={[styles.input, emailError ? styles.inputError : null]}
-            placeholder="メールアドレス"
+            style={[styles.input, passwordError ? styles.inputError : null]}
+            placeholder="新しいパスワード"
             placeholderTextColor="#ccc"
-            value={email}
-            onChangeText={(v) => { setEmail(v); setEmailError(null) }}
+            value={password}
+            onChangeText={(v) => { setPassword(v); setPasswordError(null) }}
+            secureTextEntry
             autoCapitalize="none"
-            keyboardType="email-address"
-            autoComplete="email"
           />
-          {emailError && <Text style={styles.errorText}>{emailError}</Text>}
+          {passwordError && <Text style={styles.errorText}>{passwordError}</Text>}
+        </View>
+
+        <View style={styles.fieldWrap}>
+          <TextInput
+            style={[styles.input, confirmError ? styles.inputError : null]}
+            placeholder="パスワード（確認）"
+            placeholderTextColor="#ccc"
+            value={confirmPassword}
+            onChangeText={(v) => { setConfirmPassword(v); setConfirmError(null) }}
+            secureTextEntry
+            autoCapitalize="none"
+          />
+          {confirmError && <Text style={styles.errorText}>{confirmError}</Text>}
         </View>
 
         <TouchableOpacity
@@ -78,12 +105,8 @@ export default function ForgotPasswordScreen() {
           {loading ? (
             <ActivityIndicator color={Colors.white} />
           ) : (
-            <Text style={styles.buttonText}>送信する</Text>
+            <Text style={styles.buttonText}>パスワードを変更する</Text>
           )}
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => router.back()} style={styles.backLink} activeOpacity={0.7}>
-          <Text style={styles.backLinkText}>ログイン画面に戻る</Text>
         </TouchableOpacity>
       </View>
     </LinearGradient>
@@ -160,11 +183,5 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.zenMaruBold,
     color: Colors.white,
     fontSize: 15,
-  },
-  backLink: { marginTop: 24 },
-  backLinkText: {
-    fontSize: 13,
-    color: Colors.pinkVivid,
-    fontFamily: Fonts.zenMaruBold,
   },
 })
