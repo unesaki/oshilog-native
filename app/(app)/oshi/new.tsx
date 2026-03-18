@@ -50,10 +50,12 @@ export default function OshiNewScreen() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUserId(user.id)
-      const { count } = await supabase.from('oshi').select('id', { count: 'exact', head: true }).eq('user_id', user.id)
+      const [{ count }, { data: subData }] = await Promise.all([
+        supabase.from('oshi').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('subscriptions').select('plan, status').eq('user_id', user.id).maybeSingle(),
+      ])
       setOshiCount(count ?? 0)
-      // TODO: サブスクリプション状態を確認する
-      setIsPremium(false)
+      setIsPremium(subData?.plan === 'premium' && subData?.status === 'active')
       setInitializing(false)
     }
     init()
