@@ -10,10 +10,12 @@ import { Ionicons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-ico
 import * as Linking from 'expo-linking'
 import { supabase } from '@/lib/supabase'
 import { registerPushToken } from '@/lib/notificationService'
+import { configurePurchases, loginPurchases } from '@/lib/purchases'
 import type { Session } from '@supabase/supabase-js'
 import { useRouter, useSegments } from 'expo-router'
 
 SplashScreen.preventAutoHideAsync()
+configurePurchases()
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null)
@@ -39,11 +41,12 @@ export default function RootLayout() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
       if (event === 'PASSWORD_RECOVERY') {
-        router.replace('/(auth)/reset-password')
+        router.replace('/(auth)/reset-password' as any)
         return
       }
       if (session?.user) {
         registerPushToken(session.user.id).catch(() => {})
+        loginPurchases(session.user.id)
       }
     })
 

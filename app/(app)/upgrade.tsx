@@ -1,20 +1,4 @@
-/**
- * TODO: 課金実装
- *
- * App Store / Google Play の課金（In-App Purchase）を実装する必要があります。
- * 推奨ライブラリ: expo-in-app-purchases または react-native-purchases (RevenueCat)
- *
- * 手順:
- * 1. App Store Connect / Google Play Console でサブスクリプション商品を登録
- * 2. expo-in-app-purchases または RevenueCat SDK を導入
- * 3. 購入処理とSupabaseのsubscriptionsテーブル更新を実装
- * 4. Webhookでサブスクリプション状態を同期
- *
- * WebサービスではStripeを使用しているが、ネイティブアプリでは
- * App Storeのガイドラインに従いIn-App Purchaseを使用すること。
- */
-
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   View,
   Text,
@@ -22,9 +6,13 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Platform,
+  ActivityIndicator,
 } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import Purchases, { PurchasesPackage } from 'react-native-purchases'
+import { supabase } from '@/lib/supabase'
 import { Colors } from '@/constants/colors'
 import AppHeader, { HeaderTextButton } from '@/components/AppHeader'
 import { Fonts } from '@/constants/fonts'
@@ -35,11 +23,81 @@ const FEATURES = [
   { icon: <Ionicons name="sparkles" size={22} color="#F59E0B" />, label: '広告なし', desc: '快適に使い続けられる' },
 ]
 
+const isIos = Platform.OS === 'ios'
+
 export default function UpgradeScreen() {
-  function handlePurchase() {
-    // TODO: In-App Purchase処理を実装
-    Alert.alert('準備中', 'プレミアムプランは近日公開予定です。')
+  const [offering, setOffering] = useState<PurchasesPackage | null>(null)
+  const [purchasing, setPurchasing] = useState(false)
+  const [restoring, setRestoring] = useState(false)
+
+  useEffect(() => {
+    if (isIos) return
+    Purchases.getOfferings()
+      .then((offerings) => {
+        const pkg = offerings.current?.monthly ?? null
+        setOffering(pkg)
+      })
+      .catch(() => {})
+  }, [])
+
+  async function handlePurchase() {
+    if (!offering) {
+      Alert.alert('エラー', '商品情報の取得に失敗しました。しばらくしてから再試行してください。')
+      return
+    }
+    setPurchasing(true)
+    try {
+      const { customerInfo } = await Purchases.purchasePackage(offering)
+      const isPremium = typeof customerInfo.entitlements.active['premium'] !== 'undefined'
+      if (isPremium) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase.from('subscriptions').upsert(
+            { user_id: user.id, plan: 'premium', status: 'active', purchased_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+            { onConflict: 'user_id' }
+          )
+        }
+        Alert.alert('ありがとうございます！', 'プレミアムプランへようこそ。', [
+          { text: '閉じる', onPress: () => router.back() },
+        ])
+      }
+    } catch (err: any) {
+      if (!err.userCancelled) {
+        Alert.alert('購入エラー', err.message ?? '購入処理に失敗しました。')
+      }
+    } finally {
+      setPurchasing(false)
+    }
   }
+
+  async function handleRestore() {
+    if (isIos) return
+    setRestoring(true)
+    try {
+      const customerInfo = await Purchases.restorePurchases()
+      const isPremium = typeof customerInfo.entitlements.active['premium'] !== 'undefined'
+      if (isPremium) {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase.from('subscriptions').upsert(
+            { user_id: user.id, plan: 'premium', status: 'active', updated_at: new Date().toISOString() },
+            { onConflict: 'user_id' }
+          )
+        }
+        Alert.alert('復元完了', 'プレミアムプランが復元されました。', [
+          { text: '閉じる', onPress: () => router.back() },
+        ])
+      } else {
+        Alert.alert('復元できませんでした', '有効なサブスクリプションが見つかりませんでした。')
+      }
+    } catch (err: any) {
+      Alert.alert('エラー', err.message ?? '復元に失敗しました。')
+    } finally {
+      setRestoring(false)
+    }
+  }
+
+  const purchaseDisabled = isIos || purchasing || !offering
 
   return (
     <View style={styles.container}>
@@ -95,13 +153,42 @@ export default function UpgradeScreen() {
         </View>
 
         {/* 購入ボタン */}
-        <TouchableOpacity style={styles.purchaseBtn} onPress={handlePurchase} activeOpacity={0.85}>
-          <Text style={styles.purchaseBtnText}>プレミアムプランを始める</Text>
-          <Text style={styles.purchaseBtnSub}>月額 ¥480 · いつでも解約可能</Text>
+        <TouchableOpacity
+          style={[styles.purchaseBtn, purchaseDisabled && styles.purchaseBtnDisabled]}
+          onPress={handlePurchase}
+          disabled={purchaseDisabled}
+          activeOpacity={0.85}
+        >
+          {purchasing ? (
+            <ActivityIndicator color={Colors.white} />
+          ) : (
+            <>
+              <Text style={styles.purchaseBtnText}>
+                {isIos ? '近日公開予定（iOS）' : 'プレミアムプランを始める'}
+              </Text>
+              {!isIos && <Text style={styles.purchaseBtnSub}>月額 ¥480 · いつでも解約可能</Text>}
+            </>
+          )}
+        </TouchableOpacity>
+
+        {/* 復元購入（App Store 審査要件・iOS は非活性） */}
+        <TouchableOpacity
+          onPress={handleRestore}
+          disabled={isIos || restoring}
+          activeOpacity={0.7}
+          style={styles.restoreBtn}
+        >
+          {restoring ? (
+            <ActivityIndicator color={Colors.textLight} size="small" />
+          ) : (
+            <Text style={[styles.restoreBtnText, isIos && styles.restoreBtnTextDisabled]}>
+              購入を復元する
+            </Text>
+          )}
         </TouchableOpacity>
 
         <Text style={styles.disclaimer}>
-          購入はApp Store / Google Playを通じて行われます。{'\n'}
+          購入はGoogle Playを通じて行われます。{'\n'}
           サブスクリプションは次の請求日の24時間前までに{'\n'}キャンセルしない限り自動更新されます。
         </Text>
       </ScrollView>
@@ -113,11 +200,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.cream },
   scroll: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 80 },
-  // ヒーロー
   hero: { alignItems: 'center', paddingVertical: 12 },
   heroTitle: { fontSize: 24, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, marginBottom: 8 },
   heroSubtitle: { fontSize: 14, color: Colors.textMid, textAlign: 'center' },
-  // プラン比較
   planRow: { flexDirection: 'row', marginBottom: 24 },
   planFree: {
     flex: 1, marginRight: 5, backgroundColor: Colors.white, borderRadius: 16, padding: 16,
@@ -139,21 +224,30 @@ const styles = StyleSheet.create({
   planFeatures: { gap: 6 },
   planFeatureItem: { fontSize: 12, color: Colors.textMid, fontFamily: Fonts.zenMaruRegular },
   planFeatureItemPremium: { fontSize: 12, color: Colors.white, fontFamily: Fonts.zenMaruRegular },
-  // 機能リスト
-  featureList: { backgroundColor: Colors.white, borderRadius: 16, padding: 16, marginBottom: 24, gap: 16, shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3 },
+  featureList: {
+    backgroundColor: Colors.white, borderRadius: 16, padding: 16, marginBottom: 24, gap: 16,
+    shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
+  },
   featureItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   featureIconWrap: { width: 32, alignItems: 'center' },
   featureText: { flex: 1 },
   featureLabel: { fontSize: 14, fontFamily: Fonts.zenMaruBold, color: Colors.textDark, marginBottom: 2 },
   featureDesc: { fontSize: 12, color: Colors.textLight },
-  // 購入ボタン
   purchaseBtn: {
     backgroundColor: Colors.pinkVivid, borderRadius: 16, padding: 18,
     alignItems: 'center', marginBottom: 16,
     shadowColor: Colors.pinkVivid, shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
   },
+  purchaseBtnDisabled: {
+    backgroundColor: Colors.pinkSoft,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
   purchaseBtnText: { color: Colors.white, fontSize: 17, fontFamily: Fonts.zenMaruBold, marginBottom: 4 },
   purchaseBtnSub: { color: 'rgba(255,255,255,0.8)', fontSize: 12 },
+  restoreBtn: { alignItems: 'center', marginBottom: 16 },
+  restoreBtnText: { fontSize: 13, color: Colors.textLight, fontFamily: Fonts.zenMaruRegular },
+  restoreBtnTextDisabled: { color: Colors.pinkSoft },
   disclaimer: { fontSize: 10, color: Colors.textLight, textAlign: 'center', lineHeight: 16 },
 })

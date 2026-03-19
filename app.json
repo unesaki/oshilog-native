@@ -13,6 +13,7 @@
       "backgroundColor": "#FFF8F9"
     },
     "ios": {
+      "googleServicesFile": "./GoogleService-Info.plist",
       "supportsTablet": false,
       "bundleIdentifier": "com.unetech.oshilog",
       "buildNumber": "1",
@@ -26,7 +27,8 @@
         "backgroundColor": "#FFF8F9"
       },
       "package": "com.unetech.oshilog",
-      "versionCode": 1
+      "versionCode": 1,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -36,6 +38,12 @@
     "plugins": [
       "expo-router",
       "expo-font",
+      [
+        "react-native-purchases",
+        {
+          "androidPackageName": "com.unetech.oshilog"
+        }
+      ],
       [
         "expo-notifications",
         {
